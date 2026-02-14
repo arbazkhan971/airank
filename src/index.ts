@@ -17,11 +17,14 @@ import {
   loginPage,
   dashboardPage,
   leaderboardPage,
+  historyPage,
   uploadPage,
   invitesPage,
   adminPage,
+  aboutPage,
   errorPage,
 } from './html';
+import { isValidView, isValidDateString, getDateRange, sanitizeSource, type ViewType } from './utils';
 
 type Bindings = {
   DB: D1Database;
@@ -93,6 +96,55 @@ function getBaseUrl(c: any): string {
 }
 
 // ─── Pages ──────────────────────────────────────────────────────────────────────
+
+app.get('/about', (c) => {
+  return c.html(aboutPage(c.get('user')));
+});
+
+app.get('/history', async (c) => {
+  const user = c.get('user');
+  const viewParam = c.req.query('view') || 'daily';
+  const view: ViewType = isValidView(viewParam) ? viewParam : 'daily';
+
+  const today = new Date().toISOString().slice(0, 10);
+  const dateParam = c.req.query('date') || today;
+  const dateStr = isValidDateString(dateParam) ? dateParam : today;
+
+  const dateRange = getDateRange(view, dateStr);
+
+  const results = await c.env.DB.prepare(
+    `SELECT
+      u.display_name,
+      u.avatar_url,
+      COALESCE(SUM(d.cost_usd), 0) as total_cost,
+      COALESCE(SUM(d.total_tokens), 0) as total_tokens,
+      COALESCE(SUM(d.output_tokens), 0) as total_output_tokens,
+      COUNT(DISTINCT d.date) as days_active,
+      MAX(d.date) as last_active
+    FROM users u
+    JOIN daily_usage d ON u.id = d.user_id
+    WHERE d.date >= ? AND d.date <= ?
+    GROUP BY u.id
+    HAVING total_cost > 0
+    ORDER BY total_cost DESC
+    LIMIT 10`
+  )
+    .bind(dateRange.startDate, dateRange.endDate)
+    .all();
+
+  const entries = (results.results || []).map((row: any, i: number) => ({
+    rank: i + 1,
+    display_name: row.display_name,
+    avatar_url: row.avatar_url,
+    total_cost: row.total_cost,
+    total_tokens: row.total_tokens,
+    total_output_tokens: row.total_output_tokens,
+    days_active: row.days_active,
+    last_active: row.last_active,
+  }));
+
+  return c.html(historyPage(view, dateRange, entries, user));
+});
 
 app.get('/login', (c) => {
   const user = c.get('user');
@@ -394,7 +446,7 @@ app.post('/api/upload', async (c) => {
     return c.json({ ok: false, error: 'Unauthorized' }, 401);
   }
 
-  let body: { json: string };
+  let body: { json: string; source?: string };
   try {
     body = await c.req.json();
   } catch {
@@ -404,6 +456,8 @@ app.post('/api/upload', async (c) => {
   if (!body.json || typeof body.json !== 'string') {
     return c.json({ ok: false, error: 'Missing "json" field' }, 400);
   }
+
+  const source = sanitizeSource(body.source);
 
   let report;
   try {
@@ -420,11 +474,11 @@ app.post('/api/upload', async (c) => {
     .bind(uploadId, user.id, report.type, report.entries.length)
     .run();
 
-  // Upsert daily usage entries
+  // Upsert daily usage entries (source tracking for multi-machine support)
   const stmt = c.env.DB.prepare(
-    `INSERT INTO daily_usage (id, upload_id, user_id, date, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, total_tokens, cost_usd, models_used)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(user_id, date) DO UPDATE SET
+    `INSERT INTO daily_usage (id, upload_id, user_id, date, source, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, total_tokens, cost_usd, models_used)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, date, source) DO UPDATE SET
        upload_id = excluded.upload_id,
        input_tokens = excluded.input_tokens,
        output_tokens = excluded.output_tokens,
@@ -441,6 +495,7 @@ app.post('/api/upload', async (c) => {
       uploadId,
       user.id,
       entry.date,
+      source,
       entry.inputTokens,
       entry.outputTokens,
       entry.cacheCreationTokens,

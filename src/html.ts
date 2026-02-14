@@ -3,65 +3,18 @@
  * Dark themed, responsive design using Tailwind CSS via CDN.
  */
 
-interface User {
-  id: string;
-  display_name: string;
-  email: string;
-  avatar_url: string | null;
-  is_admin: number;
-  invites_remaining: number;
-}
-
-interface LeaderboardEntry {
-  rank: number;
-  display_name: string;
-  avatar_url: string | null;
-  total_cost: number;
-  total_tokens: number;
-  total_output_tokens: number;
-  days_active: number;
-  last_active: string | null;
-}
-
-function getTitle(cost: number): { label: string; color: string } {
-  if (cost >= 500) return { label: 'Claude Maximalist', color: '#f59e0b' };
-  if (cost >= 100) return { label: 'Token Whale', color: '#8b5cf6' };
-  if (cost >= 50) return { label: 'Power User', color: '#06b6d4' };
-  if (cost >= 10) return { label: 'Practitioner', color: '#10b981' };
-  return { label: 'Apprentice', color: '#6b7280' };
-}
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-  return n.toString();
-}
-
-function formatCost(n: number): string {
-  return '$' + n.toFixed(2);
-}
-
-function timeAgo(dateStr: string | null): string {
-  if (!dateStr) return 'Never';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 30) return `${diffDays}d ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
-  return `${Math.floor(diffDays / 365)}y ago`;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+import {
+  type User,
+  type LeaderboardEntry,
+  type ViewType,
+  type DateRange,
+  getTitle,
+  formatTokens,
+  formatCost,
+  timeAgo,
+  escapeHtml,
+} from './utils';
+import { IMG_RAJAN_MESSAGE, IMG_CLAUDE_BUILDING, IMG_APP_SHARED, IMG_DOMAIN_PURCHASE } from './images';
 
 function layout(title: string, content: string, user: User | null = null): string {
   const nav = user
@@ -72,6 +25,7 @@ function layout(title: string, content: string, user: User | null = null): strin
           </a>
           <div class="flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
+            <a href="/history" class="text-sm text-gray-300 hover:text-white transition">History</a>
             <a href="/upload" class="text-sm text-gray-300 hover:text-white transition">Upload</a>
             <a href="/invites" class="text-sm text-gray-300 hover:text-white transition">Invites</a>
             ${user.is_admin ? '<a href="/admin" class="text-sm text-yellow-400 hover:text-yellow-300 transition">Admin</a>' : ''}
@@ -90,6 +44,7 @@ function layout(title: string, content: string, user: User | null = null): strin
           </a>
           <div class="flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
+            <a href="/history" class="text-sm text-gray-300 hover:text-white transition">History</a>
             <a href="/login" class="text-sm bg-purple-600 hover:bg-purple-500 text-white px-4 py-1.5 rounded-lg transition">Sign In</a>
           </div>
         </div>
@@ -150,9 +105,14 @@ function layout(title: string, content: string, user: User | null = null): strin
   <style>
     body { background: #0f0f1a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .glow { box-shadow: 0 0 20px rgba(124, 58, 237, 0.15); }
+    .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(124, 58, 237, 0.2); }
     .rank-1 { background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05)); border-color: rgba(245,158,11,0.3); }
     .rank-2 { background: linear-gradient(135deg, rgba(156,163,175,0.15), rgba(156,163,175,0.05)); border-color: rgba(156,163,175,0.3); }
     .rank-3 { background: linear-gradient(135deg, rgba(180,83,9,0.15), rgba(180,83,9,0.05)); border-color: rgba(180,83,9,0.3); }
+    .podium-1 { border-top: 3px solid #f59e0b; }
+    .podium-2 { border-top: 3px solid #9ca3af; }
+    .podium-3 { border-top: 3px solid #b45309; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -162,8 +122,11 @@ function layout(title: string, content: string, user: User | null = null): strin
   </main>
   <footer class="border-t border-gray-800 mt-16 py-8 text-center">
     <div class="max-w-6xl mx-auto px-4">
-      <p class="text-sm text-gray-500 mb-3">
+      <p class="text-sm text-gray-500 mb-1">
         Built by <a href="https://github.com/makash?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=branding" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Akash Mahajan</a>
+      </p>
+      <p class="text-xs text-gray-600 mb-3">
+        Powered by <a href="https://github.com/ryoppippi/ccusage?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=branding" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">ccusage</a>
       </p>
       <div class="flex items-center justify-center gap-4">
         <a href="https://x.com/makash?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=branding" target="_blank" rel="noopener" class="text-gray-600 hover:text-gray-300 transition" title="X / Twitter">
@@ -186,59 +149,105 @@ function layout(title: string, content: string, user: User | null = null): strin
 }
 
 export function landingPage(topEntries: LeaderboardEntry[]): string {
-  const podiumHtml = topEntries.length > 0
-    ? topEntries.map((e) => {
-        const title = getTitle(e.total_cost);
-        const medal = e.rank === 1 ? '&#x1f947;' : e.rank === 2 ? '&#x1f948;' : '&#x1f949;';
-        const ringColor = e.rank === 1 ? 'ring-yellow-400' : e.rank === 2 ? 'ring-gray-400' : 'ring-amber-600';
-        const bgClass = `rank-${e.rank}`;
-        return `<div class="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center ${bgClass} glow">
-          <div class="text-2xl mb-3">${medal}</div>
-          <div class="mb-3">
-            ${e.avatar_url ? `<img src="${escapeHtml(e.avatar_url)}" class="w-14 h-14 rounded-full mx-auto ring-2 ${ringColor}" alt="">` : `<div class="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-xl font-bold mx-auto ring-2 ${ringColor}">${escapeHtml(e.display_name.charAt(0))}</div>`}
-          </div>
-          <div class="font-semibold text-lg mb-1">${escapeHtml(e.display_name)}</div>
-          <div class="text-xs mb-3" style="color:${title.color}">${title.label}</div>
-          <div class="text-2xl font-bold text-purple-400 mb-1">${formatCost(e.total_cost)}</div>
-          <div class="text-xs text-gray-500">${formatTokens(e.total_tokens)} tokens &middot; ${e.days_active}d active</div>
-        </div>`;
-      }).join('')
-    : '';
+  // Build podium card for a single entry
+  function podiumCard(e: LeaderboardEntry): string {
+    const title = getTitle(e.total_cost);
+    const isFirst = e.rank === 1;
+    const medal = e.rank === 1 ? '&#x1f947;' : e.rank === 2 ? '&#x1f948;' : '&#x1f949;';
+    const ringColor = e.rank === 1 ? 'ring-yellow-400' : e.rank === 2 ? 'ring-gray-400' : 'ring-amber-600';
+    const avatarSize = isFirst ? 'w-20 h-20' : 'w-16 h-16';
+    const avatarText = isFirst ? 'text-2xl' : 'text-lg';
+    const costSize = isFirst ? 'text-3xl' : 'text-2xl';
+    const padding = isFirst ? 'p-8' : 'p-6';
 
-  const podiumSection = topEntries.length > 0
-    ? `<div class="mb-12">
-        <h2 class="text-lg font-semibold text-gray-300 text-center mb-6">Top Claude Users</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-          ${podiumHtml}
+    return `<div class="bg-gray-900 border border-gray-800 rounded-xl ${padding} text-center rank-${e.rank} podium-${e.rank} card-hover glow">
+      <div class="text-2xl mb-3">${medal}</div>
+      <div class="mb-3">
+        ${e.avatar_url
+          ? `<img src="${escapeHtml(e.avatar_url)}" class="${avatarSize} rounded-full mx-auto ring-2 ${ringColor}" alt="">`
+          : `<div class="${avatarSize} rounded-full bg-purple-600 flex items-center justify-center ${avatarText} font-bold mx-auto ring-2 ${ringColor}">${escapeHtml(e.display_name.charAt(0))}</div>`}
+      </div>
+      <div class="font-semibold ${isFirst ? 'text-xl' : 'text-lg'} mb-1">${escapeHtml(e.display_name)}</div>
+      <div class="text-xs mb-3" style="color:${title.color}">${title.label}</div>
+      <div class="${costSize} font-bold text-purple-400 mb-1">${formatCost(e.total_cost)}</div>
+      <div class="text-xs text-gray-500">${formatTokens(e.total_tokens)} tokens &middot; ${e.days_active}d active</div>
+    </div>`;
+  }
+
+  // Arrange in 2-1-3 order for podium effect on desktop
+  let podiumSection: string;
+  if (topEntries.length > 0) {
+    const first = topEntries.find(e => e.rank === 1);
+    const second = topEntries.find(e => e.rank === 2);
+    const third = topEntries.find(e => e.rank === 3);
+
+    // Desktop: flex with items-end, 2nd - 1st - 3rd order, 1st is taller
+    // Mobile: stack in natural 1-2-3 order
+    podiumSection = `<div class="mb-12">
+      <h2 class="text-lg font-semibold text-gray-300 text-center mb-8">Top Claude Users</h2>
+      <!-- Mobile: natural order -->
+      <div class="flex flex-col gap-4 md:hidden max-w-sm mx-auto">
+        ${first ? podiumCard(first) : ''}
+        ${second ? podiumCard(second) : ''}
+        ${third ? podiumCard(third) : ''}
+      </div>
+      <!-- Desktop: podium layout 2-1-3 with stepped heights -->
+      <div class="hidden md:flex items-end justify-center gap-4 max-w-3xl mx-auto">
+        <div class="flex-1 translate-y-4">
+          ${second ? podiumCard(second) : ''}
         </div>
-      </div>`
-    : `<div class="mb-12 text-center">
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-8 max-w-md mx-auto">
-          <p class="text-gray-400 mb-2">No data yet</p>
-          <p class="text-sm text-gray-500">Be the first to upload a ccusage report!</p>
+        <div class="flex-1">
+          ${first ? podiumCard(first) : ''}
         </div>
-      </div>`;
+        <div class="flex-1 translate-y-6">
+          ${third ? podiumCard(third) : ''}
+        </div>
+      </div>
+    </div>`;
+  } else {
+    podiumSection = `<div class="mb-12 text-center">
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-8 max-w-md mx-auto card-hover">
+        <p class="text-gray-400 mb-2">No data yet</p>
+        <p class="text-sm text-gray-500">Be the first to upload a ccusage report!</p>
+      </div>
+    </div>`;
+  }
 
   return layout(
     'Welcome',
     `<div class="flex flex-col items-center justify-center min-h-[70vh] text-center">
-      <div class="mb-10">
-        <h1 class="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+      <div class="mb-12">
+        <h1 class="text-6xl font-extrabold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent leading-tight">
           Claude Leaderboard
         </h1>
-        <p class="text-sm font-medium text-purple-400 mb-2 tracking-wide uppercase">by Akash Mahajan</p>
-        <p class="text-xl text-gray-400 max-w-lg mx-auto">
-          Track and compare your Claude Code usage. Upload your ccusage reports and see where you rank.
+        <p class="text-sm font-medium text-purple-400 mb-3 tracking-wide uppercase">by Akash Mahajan</p>
+        <p class="text-xl text-gray-400 max-w-lg mx-auto leading-relaxed">
+          Who on your team burns the most Claude tokens? Find out.
         </p>
       </div>
 
       ${podiumSection}
 
+      <!-- Origin story snippet -->
+      <div class="mb-12 max-w-lg mx-auto">
+        <div class="bg-green-900/20 border border-green-800/30 rounded-xl p-5 text-left relative">
+          <div class="text-xs text-green-400/70 mb-2 font-medium">WhatsApp Group</div>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            <span class="font-semibold text-green-400">Rajan:</span>
+            &ldquo;Code a Leaderboard Vivek? Let everyone submit their ccusage :)&rdquo;
+          </p>
+          <p class="text-xs text-gray-500 mt-2">
+            Built with Claude Code on a phone. Deployed in minutes.
+            <a href="/about" class="text-purple-400 hover:text-purple-300 transition ml-1">Read the full story &rarr;</a>
+          </p>
+        </div>
+      </div>
+
       <div class="flex flex-col sm:flex-row items-center gap-4">
-        <a href="/login" class="bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg px-8 py-3 transition text-sm">
+        <a href="/login" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg px-8 py-3.5 transition text-sm shadow-lg shadow-purple-600/20">
           Sign in &amp; Upload Your Stats
         </a>
-        <a href="/leaderboard" class="bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg px-8 py-3 transition text-sm">
+        <a href="/leaderboard" class="bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg px-8 py-3.5 transition text-sm border border-gray-700">
           View Full Leaderboard &rarr;
         </a>
       </div>
@@ -449,6 +458,21 @@ export function uploadPage(user: User, message: { type: 'success' | 'error'; tex
             ></textarea>
           </div>
 
+          <div class="mb-6">
+            <label class="block text-sm text-gray-400 mb-2">
+              Machine name <span class="text-gray-600">(optional)</span>
+            </label>
+            <input
+              type="text"
+              id="source-input"
+              placeholder="e.g. laptop, vpc-1, office"
+              pattern="[a-zA-Z0-9_-]+"
+              maxlength="50"
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 transition"
+            >
+            <p class="text-xs text-gray-500 mt-1">Track usage from multiple machines separately. Letters, numbers, hyphens, underscores only.</p>
+          </div>
+
           <button
             type="submit"
             id="submit-btn"
@@ -473,8 +497,13 @@ export function uploadPage(user: User, message: { type: 'success' | 'error'; tex
     <script>
       const fileInput = document.getElementById('file-input');
       const jsonInput = document.getElementById('json-input');
+      const sourceInput = document.getElementById('source-input');
       const form = document.getElementById('upload-form');
       const submitBtn = document.getElementById('submit-btn');
+
+      // Remember last-used source
+      const savedSource = localStorage.getItem('ccrank-source');
+      if (savedSource) sourceInput.value = savedSource;
 
       fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -488,13 +517,17 @@ export function uploadPage(user: User, message: { type: 'success' | 'error'; tex
         e.preventDefault();
         const json = jsonInput.value.trim();
         if (!json) { alert('Please paste JSON or upload a file'); return; }
+        const source = sourceInput.value.trim();
+        if (source) localStorage.setItem('ccrank-source', source);
         submitBtn.disabled = true;
         submitBtn.textContent = 'Uploading...';
         try {
+          const payload = { json };
+          if (source) payload.source = source;
           const res = await fetch('/api/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ json }),
+            body: JSON.stringify(payload),
           });
           const data = await res.json();
           if (data.ok) {
@@ -653,6 +686,211 @@ export function adminPage(
             </table>
           </div>`
         : ''
+      }
+    </div>`,
+    user
+  );
+}
+
+export function aboutPage(user: User | null = null): string {
+  return layout(
+    'About',
+    `<div class="max-w-2xl mx-auto">
+      <h1 class="text-3xl font-extrabold mb-2">The Story Behind ccrank.dev</h1>
+      <p class="text-gray-400 mb-10">How a WhatsApp message became a live leaderboard in minutes.</p>
+
+      <!-- The Spark -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 text-purple-400">The Spark</h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          It started with a message in a WhatsApp group. <strong class="text-white">Thiyagarajan Maruthavanan (Rajan)</strong> dropped a simple idea:
+        </p>
+        <div class="bg-green-900/20 border border-green-800/30 rounded-xl p-5 mb-4">
+          <p class="text-sm text-gray-300 italic">
+            &ldquo;Code a Leaderboard Vivek? Let everyone submit their ccusage :)&rdquo;
+          </p>
+        </div>
+        <img src="${IMG_RAJAN_MESSAGE}" alt="Rajan's original WhatsApp message suggesting the leaderboard" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
+      </section>
+
+      <!-- Built on a Phone -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 text-cyan-400">Built on a Phone</h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          <strong class="text-white">Akash</strong> saw the message and thought &mdash; why not? He opened Claude Code on his phone,
+          described what he wanted, and let Claude build it. The entire app was generated, deployed, and live in minutes.
+        </p>
+        <p class="text-gray-400 text-sm mb-4 italic">
+          &ldquo;The only hardwork I had to do was run 4 npm commands.&rdquo;
+        </p>
+        <img src="${IMG_CLAUDE_BUILDING}" alt="Claude Code building the leaderboard app" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
+      </section>
+
+      <!-- Sharing it -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 text-pink-400">Going Live</h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Minutes later, the app was live on Cloudflare Workers. Akash shared the link in the group, and people started uploading their ccusage reports immediately.
+        </p>
+        <img src="${IMG_APP_SHARED}" alt="Sharing the live app in the WhatsApp group" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Then came the domain &mdash; <strong class="text-white">ccrank.dev</strong> &mdash; because every side project deserves a proper home.
+        </p>
+        <img src="${IMG_DOMAIN_PURCHASE}" alt="Buying the ccrank.dev domain" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
+      </section>
+
+      <!-- What it's for -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 text-yellow-400">What This Leaderboard Is For</h2>
+        <ul class="text-gray-300 space-y-2">
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Track your Claude Code usage across days and weeks</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Friendly competition &mdash; who&rsquo;s the biggest Claude power user?</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Cost awareness &mdash; see what Claude Code actually costs</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Fun titles &mdash; from Apprentice to Claude Maximalist</li>
+        </ul>
+      </section>
+
+      <!-- How it works -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 text-green-400">How It Works</h2>
+        <ol class="text-gray-300 space-y-3">
+          <li class="flex items-start gap-3">
+            <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+            <span>Install <a href="https://github.com/ryoppippi/ccusage" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">ccusage</a> and run <code class="bg-gray-800 px-1.5 py-0.5 rounded text-sm">npx ccusage@latest daily --json</code></span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+            <span>Upload the JSON report on ccrank.dev</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+            <span>See your rank, earn titles, and compete with others</span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Credits -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 text-gray-300">Credits</h2>
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+          <div>
+            <div class="text-sm font-semibold text-white mb-1">Powered by ccusage</div>
+            <p class="text-sm text-gray-400">
+              <a href="https://github.com/ryoppippi/ccusage?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=about" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">ccusage</a>
+              by <strong class="text-gray-300">ryoppippi</strong> &mdash; the CLI tool that makes Claude Code usage tracking possible.
+              Without it, there&rsquo;d be no data to leaderboard.
+            </p>
+          </div>
+          <div class="border-t border-gray-800 pt-4">
+            <div class="text-sm font-semibold text-white mb-1">Built with</div>
+            <p class="text-sm text-gray-400">
+              <a href="https://claude.ai" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Claude Code</a> +
+              <a href="https://hono.dev" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Hono</a> +
+              <a href="https://workers.cloudflare.com" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Cloudflare Workers</a> +
+              <a href="https://developers.cloudflare.com/d1/" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">D1</a>
+            </p>
+          </div>
+          <div class="border-t border-gray-800 pt-4">
+            <div class="text-sm font-semibold text-white mb-1">The spark</div>
+            <p class="text-sm text-gray-400">
+              <strong class="text-gray-300">Thiyagarajan Maruthavanan (Rajan)</strong> &mdash; for the idea that started it all.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="text-center">
+        <a href="/" class="text-purple-400 hover:text-purple-300 transition">&larr; Back to home</a>
+      </div>
+    </div>`,
+    user
+  );
+}
+
+export function historyPage(
+  view: ViewType,
+  dateRange: DateRange,
+  entries: LeaderboardEntry[],
+  user: User | null = null
+): string {
+  const tabs = (['daily', 'weekly', 'monthly'] as ViewType[]).map(v => {
+    const isActive = v === view;
+    const label = v.charAt(0).toUpperCase() + v.slice(1);
+    const href = `/history?view=${v}`;
+    return `<a href="${href}" class="px-4 py-2 text-sm font-medium rounded-lg transition ${isActive ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}">${label}</a>`;
+  }).join('');
+
+  const rows = entries.length > 0
+    ? entries.map((e) => {
+        const title = getTitle(e.total_cost);
+        const rankClass = e.rank <= 3 ? `rank-${e.rank}` : '';
+        const medal = e.rank === 1 ? '<span class="text-yellow-400 mr-1">&#x1f947;</span>' : e.rank === 2 ? '<span class="text-gray-300 mr-1">&#x1f948;</span>' : e.rank === 3 ? '<span class="text-amber-600 mr-1">&#x1f949;</span>' : '';
+        return `<tr class="border-b border-gray-800/50 hover:bg-gray-800/30 transition ${rankClass}">
+          <td class="py-3 px-4 text-center font-mono text-sm">${medal}${e.rank}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-3">
+              ${e.avatar_url ? `<img src="${escapeHtml(e.avatar_url)}" class="w-8 h-8 rounded-full" alt="">` : `<div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(e.display_name.charAt(0))}</div>`}
+              <div>
+                <div class="font-medium">${escapeHtml(e.display_name)}</div>
+                <div class="text-xs" style="color:${title.color}">${title.label}</div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4 text-right font-mono text-purple-400">${formatCost(e.total_cost)}</td>
+          <td class="py-3 px-4 text-right font-mono text-cyan-400">${formatTokens(e.total_tokens)}</td>
+          <td class="py-3 px-4 text-right text-sm text-gray-400">${e.days_active}</td>
+        </tr>`;
+      }).join('')
+    : '';
+
+  const prevHref = `/history?view=${view}&date=${dateRange.prevDate}`;
+  const nextHref = dateRange.isCurrentPeriod ? '#' : `/history?view=${view}&date=${dateRange.nextDate}`;
+  const nextDisabled = dateRange.isCurrentPeriod;
+
+  return layout(
+    'History',
+    `<div class="max-w-4xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold mb-1">History</h1>
+        <p class="text-gray-400">Browse historical leaderboard rankings.</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-6">
+        ${tabs}
+      </div>
+
+      <!-- Date navigation -->
+      <div class="flex items-center justify-between mb-6 bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
+        <a href="${prevHref}" class="text-gray-400 hover:text-white transition text-sm">&larr; Previous</a>
+        <span class="text-sm font-medium text-gray-200">${escapeHtml(dateRange.label)}</span>
+        ${nextDisabled
+          ? '<span class="text-gray-600 text-sm cursor-not-allowed">Next &rarr;</span>'
+          : `<a href="${nextHref}" class="text-gray-400 hover:text-white transition text-sm">Next &rarr;</a>`
+        }
+      </div>
+
+      ${entries.length === 0
+        ? `<div class="text-center py-16 text-gray-500">
+            <p class="text-lg mb-2">No data for this period</p>
+            <p class="text-sm">Try navigating to a different date.</p>
+          </div>`
+        : `<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden glow">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-800 text-xs text-gray-500 uppercase tracking-wider">
+                  <th class="py-3 px-4 text-center w-16">Rank</th>
+                  <th class="py-3 px-4 text-left">User</th>
+                  <th class="py-3 px-4 text-right">Cost</th>
+                  <th class="py-3 px-4 text-right">Tokens</th>
+                  <th class="py-3 px-4 text-right">Days</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`
       }
     </div>`,
     user
