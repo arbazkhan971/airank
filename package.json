@@ -12,7 +12,9 @@
     "db:seed:local": "wrangler d1 execute claude-leaderboard-db --local --file=migrations/0002_seed_invites.sql"
   },
   "dependencies": {
-    "hono": "^4.7.0"
+    "@resvg/resvg-wasm": "^2.6.2",
+    "hono": "^4.7.0",
+    "satori": "^0.19.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",

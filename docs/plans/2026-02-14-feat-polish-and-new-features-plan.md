@@ -680,16 +680,16 @@ After uploading data, show: "Your rank changed! Share your card?" with a tweet p
 On the leaderboard, add a small share icon next to the user's own row.
 
 ### Acceptance Criteria: Phase 5
-- [ ] Users can enable/disable sharing from settings
-- [ ] `/card/:slug` returns 404 if sharing disabled
-- [ ] Simple card shows rank, cost, title, days active
-- [ ] Full card shows all stats
-- [ ] OG image renders as 1200x630 PNG
-- [ ] Twitter card preview works when URL is shared
-- [ ] "Share on X" opens tweet composer with card URL
-- [ ] "Download Image" saves PNG locally
-- [ ] Share slug is unique per user
-- [ ] Card page includes "Join at ccrank.dev" CTA for viewers
+- [x] Users can enable/disable sharing from settings
+- [x] `/card/:slug` returns 404 if sharing disabled
+- [x] Simple card shows rank, cost, title, days active
+- [x] Full card shows all stats
+- [x] OG image renders as 1200x630 PNG
+- [x] Twitter card preview works when URL is shared
+- [x] "Share on X" opens tweet composer with card URL
+- [x] "Download Image" saves PNG locally
+- [x] Share slug is unique per user
+- [x] Card page includes "Join at ccrank.dev" CTA for viewers
 
 ---
 

@@ -11,6 +11,8 @@ export interface User {
   avatar_url: string | null;
   is_admin: number;
   invites_remaining: number;
+  sharing_enabled: number;
+  share_slug: string | null;
 }
 
 export interface LeaderboardEntry {
@@ -97,6 +99,20 @@ export function sanitizeSource(input: string | undefined): string {
   if (!input) return 'default';
   const cleaned = input.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50);
   return cleaned || 'default';
+}
+
+// ─── Slug helpers ───────────────────────────────────────────────────────────────
+
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 30) || 'user';
+}
+
+export function isValidSlug(slug: string): boolean {
+  return /^[a-z0-9][a-z0-9-]{0,28}[a-z0-9]$/.test(slug) || /^[a-z0-9]$/.test(slug);
 }
 
 // ─── Date ranges for time travel ────────────────────────────────────────────────

@@ -28,6 +28,7 @@ function layout(title: string, content: string, user: User | null = null): strin
             <a href="/history" class="text-sm text-gray-300 hover:text-white transition">History</a>
             <a href="/upload" class="text-sm text-gray-300 hover:text-white transition">Upload</a>
             <a href="/invites" class="text-sm text-gray-300 hover:text-white transition">Invites</a>
+            <a href="/settings" class="text-sm text-gray-300 hover:text-white transition">Settings</a>
             ${user.is_admin ? '<a href="/admin" class="text-sm text-yellow-400 hover:text-yellow-300 transition">Admin</a>' : ''}
             <div class="flex items-center gap-2">
               ${user.avatar_url ? `<img src="${escapeHtml(user.avatar_url)}" class="w-7 h-7 rounded-full" alt="">` : `<div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(user.display_name.charAt(0))}</div>`}
@@ -378,6 +379,27 @@ export function dashboardPage(user: User, stats: { total_cost: number; total_tok
       </div>
       <a href="/invites" class="flex-shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition ml-4">
         Invite Friends
+      </a>
+    </div>` : ''}
+
+    <!-- Share card nudge -->
+    ${user.sharing_enabled && user.share_slug ? `
+    <div class="bg-cyan-900/20 border border-cyan-800/30 rounded-xl p-5 flex items-center justify-between mt-4">
+      <div>
+        <p class="text-sm font-medium text-gray-200">Share your stats card</p>
+        <p class="text-xs text-gray-400 mt-1">Show off your Claude Code usage on Twitter/LinkedIn</p>
+      </div>
+      <a href="/card/${escapeHtml(user.share_slug)}" class="flex-shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition ml-4">
+        View Card
+      </a>
+    </div>` : !user.sharing_enabled ? `
+    <div class="bg-gray-800/50 border border-gray-700/30 rounded-xl p-5 flex items-center justify-between mt-4">
+      <div>
+        <p class="text-sm font-medium text-gray-300">Share your ranking</p>
+        <p class="text-xs text-gray-500 mt-1">Create a shareable stats card for Twitter/LinkedIn</p>
+      </div>
+      <a href="/settings" class="flex-shrink-0 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition ml-4">
+        Enable Sharing
       </a>
     </div>` : ''}`,
     user
@@ -949,6 +971,248 @@ export function historyPage(
         </div>`
       }
     </div>`,
+    user
+  );
+}
+
+export function cardPage(
+  cardUser: { display_name: string; avatar_url: string | null; share_slug: string },
+  stats: { total_cost: number; total_tokens: number; total_output_tokens: number; days_active: number; rank: number; last_active: string | null },
+  mode: 'simple' | 'full'
+): string {
+  const title = getTitle(stats.total_cost);
+  const rankLabel = `#${stats.rank}`;
+  const rankColor = stats.rank === 1 ? '#eab308' : stats.rank === 2 ? '#9ca3af' : stats.rank === 3 ? '#b45309' : '#7c3aed';
+  const cardUrl = `https://ccrank.dev/card/${escapeHtml(cardUser.share_slug)}`;
+  const imageUrl = `https://ccrank.dev/card/${escapeHtml(cardUser.share_slug)}/image.png`;
+  const tweetText = encodeURIComponent(`I'm ranked ${rankLabel} on the Claude Code Leaderboard with ${formatCost(stats.total_cost)} spent! Check your ranking at ccrank.dev`);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(cardUser.display_name)}'s Claude Stats - ccrank.dev</title>
+  <meta property="og:title" content="${escapeHtml(cardUser.display_name)} - ${rankLabel} on Claude Leaderboard">
+  <meta property="og:description" content="${title.label} with ${formatCost(stats.total_cost)} spent on Claude Code. ${stats.days_active} days active.">
+  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="${cardUrl}">
+  <meta property="og:type" content="profile">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(cardUser.display_name)} - ${rankLabel} on Claude Leaderboard">
+  <meta name="twitter:description" content="${title.label} with ${formatCost(stats.total_cost)} spent. ${stats.days_active} days active.">
+  <meta name="twitter:image" content="${imageUrl}">
+  <meta name="twitter:creator" content="@makash">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f3c6;</text></svg>">
+  <style>
+    body { background: #0f0f1a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- Card -->
+  <div id="stats-card" class="w-full max-w-lg bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden shadow-2xl">
+    <!-- Top accent -->
+    <div class="h-1.5" style="background: linear-gradient(90deg, ${rankColor}, #7c3aed);"></div>
+
+    <div class="p-8">
+      <!-- Header -->
+      <div class="flex items-center gap-5 mb-6">
+        <div class="text-4xl font-bold" style="color: ${rankColor};">${rankLabel}</div>
+        <div>
+          <div class="flex items-center gap-3">
+            ${cardUser.avatar_url
+              ? `<img src="${escapeHtml(cardUser.avatar_url)}" class="w-12 h-12 rounded-full ring-2" style="--tw-ring-color: ${rankColor};" alt="">`
+              : `<div class="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-lg font-bold">${escapeHtml(cardUser.display_name.charAt(0))}</div>`}
+            <div>
+              <div class="text-xl font-bold text-gray-100">${escapeHtml(cardUser.display_name)}</div>
+              <div class="text-sm font-semibold" style="color: ${title.color};">${title.label}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main stat -->
+      <div class="mb-6">
+        <div class="text-5xl font-bold text-purple-400">${formatCost(stats.total_cost)}</div>
+        <div class="text-sm text-gray-500 mt-1">total spent on Claude Code</div>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="grid grid-cols-3 gap-4 ${mode === 'full' ? 'mb-6' : ''}">
+        <div>
+          <div class="text-xl font-bold text-cyan-400">${formatTokens(stats.total_tokens)}</div>
+          <div class="text-xs text-gray-500">Total Tokens</div>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-green-400">${formatTokens(stats.total_output_tokens)}</div>
+          <div class="text-xs text-gray-500">Output Tokens</div>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-yellow-400">${stats.days_active}</div>
+          <div class="text-xs text-gray-500">Days Active</div>
+        </div>
+      </div>
+
+      ${mode === 'full' && stats.last_active ? `
+      <div class="text-sm text-gray-500">Last active: ${escapeHtml(stats.last_active)}</div>
+      ` : ''}
+    </div>
+
+    <!-- Footer -->
+    <div class="px-8 py-4 bg-gray-800/50 border-t border-gray-800 flex items-center justify-between">
+      <span class="text-sm text-gray-400">ccrank.dev</span>
+      <span class="text-xs text-gray-600">Claude Code Leaderboard</span>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="flex gap-3 mt-6">
+    <a href="https://x.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(cardUrl)}"
+       target="_blank" rel="noopener"
+       class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      Share on X
+    </a>
+    <a href="${imageUrl}" download="${escapeHtml(cardUser.share_slug)}-card.png"
+       class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Download Image
+    </a>
+    <button onclick="navigator.clipboard.writeText('${cardUrl}').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Link',2000)})"
+       class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+      Copy Link
+    </button>
+  </div>
+
+  <!-- Mode toggle -->
+  <div class="mt-4">
+    <a href="/card/${escapeHtml(cardUser.share_slug)}?mode=${mode === 'simple' ? 'full' : 'simple'}"
+       class="text-sm text-purple-400 hover:text-purple-300 transition">
+      Switch to ${mode === 'simple' ? 'full' : 'simple'} card
+    </a>
+  </div>
+
+  <!-- CTA for viewers -->
+  <div class="mt-8 text-center">
+    <p class="text-sm text-gray-500 mb-2">Track your own Claude Code usage</p>
+    <a href="/" class="text-purple-400 hover:text-purple-300 font-medium transition">Join at ccrank.dev</a>
+  </div>
+
+</body>
+</html>`;
+}
+
+export function settingsPage(user: User, shareUrl: string | null): string {
+  return layout(
+    'Settings',
+    `<div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-bold mb-6">Settings</h1>
+
+      <!-- Sharing Section -->
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4">Social Stats Card</h2>
+        <p class="text-sm text-gray-400 mb-4">Share your Claude Code usage ranking as a beautiful card on Twitter/LinkedIn.</p>
+
+        <form id="sharing-form" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="text-sm text-gray-300">Make my stats card public</label>
+            <button type="button" id="sharing-toggle"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${user.sharing_enabled ? 'bg-purple-600' : 'bg-gray-700'}"
+              role="switch" aria-checked="${user.sharing_enabled ? 'true' : 'false'}">
+              <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${user.sharing_enabled ? 'translate-x-5' : 'translate-x-0'}"></span>
+            </button>
+          </div>
+
+          <div id="slug-section" class="${user.sharing_enabled ? '' : 'hidden'}">
+            <label class="block text-sm text-gray-400 mb-2">Your card URL slug</label>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-500">ccrank.dev/card/</span>
+              <input type="text" id="share-slug" value="${escapeHtml(user.share_slug || '')}"
+                placeholder="your-name"
+                class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition"
+                maxlength="30" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]">
+            </div>
+            <p class="text-xs text-gray-600 mt-1">Lowercase letters, numbers, and hyphens only</p>
+          </div>
+
+          <button type="submit" id="save-btn"
+            class="bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition">
+            Save Settings
+          </button>
+
+          <div id="settings-message" class="hidden text-sm mt-2"></div>
+        </form>
+
+        ${shareUrl ? `
+        <div class="mt-6 pt-6 border-t border-gray-800">
+          <p class="text-sm text-gray-400 mb-3">Your card is live:</p>
+          <div class="flex items-center gap-3">
+            <a href="${escapeHtml(shareUrl)}" target="_blank" class="text-purple-400 hover:text-purple-300 text-sm transition">${escapeHtml(shareUrl)}</a>
+            <button onclick="navigator.clipboard.writeText('${escapeHtml(shareUrl)}').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)})"
+              class="text-xs bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded transition cursor-pointer">Copy</button>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      const toggle = document.getElementById('sharing-toggle');
+      const slugSection = document.getElementById('slug-section');
+      const form = document.getElementById('sharing-form');
+      const msgEl = document.getElementById('settings-message');
+      let enabled = ${user.sharing_enabled ? 'true' : 'false'};
+
+      toggle.addEventListener('click', () => {
+        enabled = !enabled;
+        toggle.classList.toggle('bg-purple-600', enabled);
+        toggle.classList.toggle('bg-gray-700', !enabled);
+        toggle.setAttribute('aria-checked', String(enabled));
+        const thumb = toggle.querySelector('span');
+        thumb.classList.toggle('translate-x-5', enabled);
+        thumb.classList.toggle('translate-x-0', !enabled);
+        slugSection.classList.toggle('hidden', !enabled);
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const slug = document.getElementById('share-slug').value.trim();
+        const btn = document.getElementById('save-btn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        msgEl.classList.add('hidden');
+
+        try {
+          const res = await fetch('/api/settings/sharing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled, slug }),
+          });
+          const data = await res.json();
+          if (data.ok) {
+            msgEl.textContent = 'Settings saved!';
+            msgEl.className = 'text-sm mt-2 text-green-400';
+            if (data.shareUrl) {
+              setTimeout(() => location.reload(), 1000);
+            }
+          } else {
+            msgEl.textContent = data.error || 'Failed to save';
+            msgEl.className = 'text-sm mt-2 text-red-400';
+          }
+        } catch {
+          msgEl.textContent = 'Network error';
+          msgEl.className = 'text-sm mt-2 text-red-400';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Save Settings';
+      });
+    })();
+    </script>`,
     user
   );
 }

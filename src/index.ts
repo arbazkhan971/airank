@@ -22,9 +22,12 @@ import {
   invitesPage,
   adminPage,
   aboutPage,
+  cardPage,
+  settingsPage,
   errorPage,
 } from './html';
-import { isValidView, isValidDateString, getDateRange, sanitizeSource, type ViewType } from './utils';
+import { isValidView, isValidDateString, getDateRange, sanitizeSource, slugify, isValidSlug, type ViewType } from './utils';
+import { generateCardPng, type CardData } from './card';
 
 type Bindings = {
   DB: D1Database;
@@ -43,6 +46,8 @@ type Variables = {
     avatar_url: string | null;
     is_admin: number;
     invites_remaining: number;
+    sharing_enabled: number;
+    share_slug: string | null;
   } | null;
   session: SessionPayload | null;
 };
@@ -58,7 +63,7 @@ app.use('*', async (c, next) => {
     if (session) {
       c.set('session', session);
       const user = await c.env.DB.prepare(
-        'SELECT id, google_id, email, display_name, avatar_url, is_admin, invites_remaining FROM users WHERE id = ?'
+        'SELECT id, google_id, email, display_name, avatar_url, is_admin, invites_remaining, sharing_enabled, share_slug FROM users WHERE id = ?'
       )
         .bind(session.userId)
         .first();
@@ -306,6 +311,136 @@ app.get('/admin', async (c) => {
       total_invites: (inviteCount as any)?.cnt ?? 0,
     }, (allCodes.results || []) as any[])
   );
+});
+
+// ─── Card Routes (public) ────────────────────────────────────────────────────────
+
+app.get('/card/:slug/image.png', async (c) => {
+  const slug = c.req.param('slug');
+  const user = await c.env.DB.prepare(
+    'SELECT id, display_name, avatar_url, share_slug FROM users WHERE share_slug = ? AND sharing_enabled = 1'
+  ).bind(slug).first();
+
+  if (!user) return c.text('Not Found', 404);
+
+  const stats = await c.env.DB.prepare(
+    `SELECT COALESCE(SUM(cost_usd), 0) as total_cost, COALESCE(SUM(total_tokens), 0) as total_tokens,
+     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COUNT(DISTINCT date) as days_active, MAX(date) as last_active
+     FROM daily_usage WHERE user_id = ?`
+  ).bind((user as any).id).first();
+
+  const rankResult = await c.env.DB.prepare(
+    `SELECT COUNT(*) + 1 as rank FROM (SELECT user_id, SUM(cost_usd) as total_cost FROM daily_usage GROUP BY user_id)
+     WHERE total_cost > (SELECT COALESCE(SUM(cost_usd), 0) FROM daily_usage WHERE user_id = ?)`
+  ).bind((user as any).id).first();
+
+  const mode = c.req.query('mode') === 'full' ? 'full' : 'simple';
+
+  const cardData: CardData = {
+    displayName: (user as any).display_name,
+    avatarUrl: (user as any).avatar_url,
+    rank: (rankResult as any)?.rank ?? 0,
+    totalCost: (stats as any)?.total_cost ?? 0,
+    totalTokens: (stats as any)?.total_tokens ?? 0,
+    totalOutputTokens: (stats as any)?.total_output_tokens ?? 0,
+    daysActive: (stats as any)?.days_active ?? 0,
+    lastActive: (stats as any)?.last_active ?? null,
+  };
+
+  const png = await generateCardPng(cardData, mode);
+  return new Response(png, {
+    headers: {
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+});
+
+app.get('/card/:slug', async (c) => {
+  const slug = c.req.param('slug');
+  const user = await c.env.DB.prepare(
+    'SELECT id, display_name, avatar_url, share_slug FROM users WHERE share_slug = ? AND sharing_enabled = 1'
+  ).bind(slug).first();
+
+  if (!user) return c.html(errorPage('Not Found', 'This card does not exist or sharing is disabled.'), 404);
+
+  const stats = await c.env.DB.prepare(
+    `SELECT COALESCE(SUM(cost_usd), 0) as total_cost, COALESCE(SUM(total_tokens), 0) as total_tokens,
+     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COUNT(DISTINCT date) as days_active, MAX(date) as last_active
+     FROM daily_usage WHERE user_id = ?`
+  ).bind((user as any).id).first();
+
+  const rankResult = await c.env.DB.prepare(
+    `SELECT COUNT(*) + 1 as rank FROM (SELECT user_id, SUM(cost_usd) as total_cost FROM daily_usage GROUP BY user_id)
+     WHERE total_cost > (SELECT COALESCE(SUM(cost_usd), 0) FROM daily_usage WHERE user_id = ?)`
+  ).bind((user as any).id).first();
+
+  const mode = c.req.query('mode') === 'full' ? 'full' : 'simple';
+
+  return c.html(cardPage(
+    { display_name: (user as any).display_name, avatar_url: (user as any).avatar_url, share_slug: (user as any).share_slug },
+    {
+      total_cost: (stats as any)?.total_cost ?? 0,
+      total_tokens: (stats as any)?.total_tokens ?? 0,
+      total_output_tokens: (stats as any)?.total_output_tokens ?? 0,
+      days_active: (stats as any)?.days_active ?? 0,
+      rank: (rankResult as any)?.rank ?? 0,
+      last_active: (stats as any)?.last_active ?? null,
+    },
+    mode
+  ));
+});
+
+// ─── Settings ────────────────────────────────────────────────────────────────────
+
+app.get('/settings', async (c) => {
+  const authErr = requireAuth(c);
+  if (authErr) return authErr;
+  const user = c.get('user')!;
+  const shareUrl = user.sharing_enabled && user.share_slug ? `https://ccrank.dev/card/${user.share_slug}` : null;
+  return c.html(settingsPage(user, shareUrl));
+});
+
+app.post('/api/settings/sharing', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ ok: false, error: 'Unauthorized' }, 401);
+
+  let body: { enabled: boolean; slug?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ ok: false, error: 'Invalid request' }, 400);
+  }
+
+  const enabled = body.enabled ? 1 : 0;
+  let slug = user.share_slug;
+
+  if (enabled) {
+    const rawSlug = (body.slug || '').trim().toLowerCase();
+    slug = rawSlug || slugify(user.display_name);
+
+    if (!isValidSlug(slug)) {
+      return c.json({ ok: false, error: 'Invalid slug. Use lowercase letters, numbers, and hyphens.' }, 400);
+    }
+
+    // Check uniqueness
+    const existing = await c.env.DB.prepare(
+      'SELECT id FROM users WHERE share_slug = ? AND id != ?'
+    ).bind(slug, user.id).first();
+
+    if (existing) {
+      return c.json({ ok: false, error: 'This slug is already taken. Try another.' }, 400);
+    }
+  }
+
+  await c.env.DB.prepare(
+    'UPDATE users SET sharing_enabled = ?, share_slug = ? WHERE id = ?'
+  ).bind(enabled, enabled ? slug : null, user.id).run();
+
+  return c.json({
+    ok: true,
+    shareUrl: enabled && slug ? `https://ccrank.dev/card/${slug}` : null,
+  });
 });
 
 // ─── Auth Routes ────────────────────────────────────────────────────────────────
