@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "hono": "^4.7.0",
-    "satori": "^0.19.2"
+    "satori": "^0.19.2",
+    "workers-og": "^0.0.27"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",

@@ -29,6 +29,8 @@ import {
 } from './html';
 import { isValidView, isValidDateString, getDateRange, sanitizeSource, slugify, isValidSlug, type ViewType } from './utils';
 import { generateCardSvg, type CardData } from './card';
+import { generateCardHtml } from './card-png';
+import { uploadCardSvg, getCardPngUrl } from './sirv';
 
 type Bindings = {
   DB: D1Database;
@@ -36,6 +38,8 @@ type Bindings = {
   GOOGLE_CLIENT_SECRET: string;
   SESSION_SECRET: string;
   ADMIN_EMAIL: string;
+  SIRV_CLIENT_ID: string;
+  SIRV_CLIENT_SECRET: string;
 };
 
 type Variables = {
@@ -355,16 +359,38 @@ app.get('/user/:slug', async (c) => {
   const viewer = c.get('user');
   const isOwner = viewer?.id === (profileUser as any).id;
 
+  const statsObj = {
+    total_cost: (stats as any)?.total_cost ?? 0,
+    total_tokens: (stats as any)?.total_tokens ?? 0,
+    total_output_tokens: (stats as any)?.total_output_tokens ?? 0,
+    days_active: (stats as any)?.days_active ?? 0,
+    rank: (rankResult as any)?.rank ?? 0,
+    last_active: (stats as any)?.last_active ?? null,
+  };
+
+  // Fire-and-forget: generate full card SVG and upload to Sirv for PNG OG image
+  if (c.env.SIRV_CLIENT_ID) {
+    const cardData: CardData = {
+      displayName: (profileUser as any).display_name,
+      avatarUrl: (profileUser as any).avatar_url,
+      rank: statsObj.rank,
+      totalCost: statsObj.total_cost,
+      totalTokens: statsObj.total_tokens,
+      totalOutputTokens: statsObj.total_output_tokens,
+      daysActive: statsObj.days_active,
+      lastActive: statsObj.last_active,
+      favTools,
+    };
+    c.executionCtx.waitUntil(
+      generateCardSvg(cardData, 'full')
+        .then(svg => uploadCardSvg(slug, svg, c.env.SIRV_CLIENT_ID, c.env.SIRV_CLIENT_SECRET))
+        .catch(() => {})
+    );
+  }
+
   return c.html(profilePage(
     { display_name: (profileUser as any).display_name, avatar_url: (profileUser as any).avatar_url, share_slug: (profileUser as any).share_slug },
-    {
-      total_cost: (stats as any)?.total_cost ?? 0,
-      total_tokens: (stats as any)?.total_tokens ?? 0,
-      total_output_tokens: (stats as any)?.total_output_tokens ?? 0,
-      days_active: (stats as any)?.days_active ?? 0,
-      rank: (rankResult as any)?.rank ?? 0,
-      last_active: (stats as any)?.last_active ?? null,
-    },
+    statsObj,
     favTools,
     (heatmapRows.results || []).map((r: any) => ({ date: r.date, cost: r.cost, tokens: r.tokens, sessions: r.sessions })),
     isOwner,
@@ -377,7 +403,7 @@ app.get('/user/:slug', async (c) => {
 app.get('/card/:slug/image.svg', async (c) => {
   const slug = c.req.param('slug');
   const user = await c.env.DB.prepare(
-    'SELECT id, display_name, avatar_url, share_slug FROM users WHERE share_slug = ? AND sharing_enabled = 1'
+    'SELECT id, display_name, avatar_url, share_slug, fav_tools FROM users WHERE share_slug = ? AND sharing_enabled = 1'
   ).bind(slug).first();
 
   if (!user) return c.text('Not Found', 404);
@@ -395,6 +421,10 @@ app.get('/card/:slug/image.svg', async (c) => {
 
   const mode = c.req.query('mode') === 'full' ? 'full' : 'simple';
 
+  const favTools: string[] = (() => {
+    try { return JSON.parse((user as any).fav_tools || '[]'); } catch { return []; }
+  })();
+
   const cardData: CardData = {
     displayName: (user as any).display_name,
     avatarUrl: (user as any).avatar_url,
@@ -404,14 +434,70 @@ app.get('/card/:slug/image.svg', async (c) => {
     totalOutputTokens: (stats as any)?.total_output_tokens ?? 0,
     daysActive: (stats as any)?.days_active ?? 0,
     lastActive: (stats as any)?.last_active ?? null,
+    favTools: mode === 'full' ? favTools : undefined,
   };
 
   const svg = await generateCardSvg(cardData, mode);
+
+  // Fire-and-forget upload to Sirv for PNG OG images (full mode only)
+  if (mode === 'full' && c.env.SIRV_CLIENT_ID) {
+    c.executionCtx.waitUntil(
+      uploadCardSvg(slug, svg, c.env.SIRV_CLIENT_ID, c.env.SIRV_CLIENT_SECRET).catch(() => {})
+    );
+  }
+
   return new Response(svg, {
     headers: {
       'Content-Type': 'image/svg+xml',
       'Cache-Control': 'public, max-age=3600',
     },
+  });
+});
+
+app.get('/card/:slug/image.png', async (c) => {
+  const { ImageResponse } = await import('workers-og');
+  const slug = c.req.param('slug');
+  const user = await c.env.DB.prepare(
+    'SELECT id, display_name, avatar_url, share_slug, fav_tools FROM users WHERE share_slug = ? AND sharing_enabled = 1'
+  ).bind(slug).first();
+
+  if (!user) return c.text('Not Found', 404);
+
+  const stats = await c.env.DB.prepare(
+    `SELECT COALESCE(SUM(cost_usd), 0) as total_cost, COALESCE(SUM(total_tokens), 0) as total_tokens,
+     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COUNT(DISTINCT date) as days_active, MAX(date) as last_active
+     FROM daily_usage WHERE user_id = ?`
+  ).bind((user as any).id).first();
+
+  const rankResult = await c.env.DB.prepare(
+    `SELECT COUNT(*) + 1 as rank FROM (SELECT user_id, SUM(cost_usd) as total_cost FROM daily_usage GROUP BY user_id)
+     WHERE total_cost > (SELECT COALESCE(SUM(cost_usd), 0) FROM daily_usage WHERE user_id = ?)`
+  ).bind((user as any).id).first();
+
+  const mode = c.req.query('mode') === 'simple' ? 'simple' : 'full';
+
+  const favTools: string[] = (() => {
+    try { return JSON.parse((user as any).fav_tools || '[]'); } catch { return []; }
+  })();
+
+  const cardData: CardData = {
+    displayName: (user as any).display_name,
+    avatarUrl: (user as any).avatar_url,
+    rank: (rankResult as any)?.rank ?? 0,
+    totalCost: (stats as any)?.total_cost ?? 0,
+    totalTokens: (stats as any)?.total_tokens ?? 0,
+    totalOutputTokens: (stats as any)?.total_output_tokens ?? 0,
+    daysActive: (stats as any)?.days_active ?? 0,
+    lastActive: (stats as any)?.last_active ?? null,
+    favTools: mode === 'full' ? favTools : undefined,
+  };
+
+  const html = generateCardHtml(cardData, mode);
+
+  return new ImageResponse(html, {
+    width: 1200,
+    height: 630,
+    format: 'png',
   });
 });
 

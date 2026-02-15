@@ -38,6 +38,7 @@ export interface CardData {
   totalOutputTokens: number;
   daysActive: number;
   lastActive: string | null;
+  favTools?: string[];
 }
 
 function getRankAccent(rank: number): { color: string; label: string } {
@@ -182,6 +183,44 @@ export async function generateCardSvg(data: CardData, mode: 'simple' | 'full'): 
       },
     },
   ];
+
+  if (mode === 'full' && data.favTools && data.favTools.length > 0) {
+    children.push({
+      type: 'div',
+      props: {
+        style: {
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          marginBottom: data.lastActive ? 16 : 0,
+        },
+        children: [
+          {
+            type: 'div',
+            props: {
+              style: { fontSize: 16, color: '#9ca3af' },
+              children: 'Fav tools:',
+            },
+          },
+          ...data.favTools.map(tool => ({
+            type: 'div',
+            props: {
+              style: {
+                display: 'flex',
+                fontSize: 14,
+                color: '#c4b5fd',
+                background: 'rgba(139, 92, 246, 0.15)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                borderRadius: 9999,
+                padding: '4px 14px',
+              },
+              children: tool.length > 20 ? tool.slice(0, 18) + '...' : tool,
+            },
+          })),
+        ],
+      },
+    });
+  }
 
   if (mode === 'full' && data.lastActive) {
     children.push({

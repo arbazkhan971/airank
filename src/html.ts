@@ -23,9 +23,11 @@ function layout(title: string, content: string, user: User | null = null, ogOver
           <a href="/" class="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
             ccrank.dev
           </a>
-          <div class="flex items-center gap-6">
+          <!-- Desktop nav -->
+          <div class="hidden md:flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
             <a href="/history" class="text-sm text-gray-300 hover:text-white transition">History</a>
+            <a href="/about" class="text-sm text-gray-300 hover:text-white transition">About</a>
             <a href="/upload" class="text-sm text-gray-300 hover:text-white transition">Upload</a>
             <a href="/invites" class="text-sm text-gray-300 hover:text-white transition">Invites</a>
             <a href="/settings" class="text-sm text-gray-300 hover:text-white transition">Settings</a>
@@ -36,6 +38,25 @@ function layout(title: string, content: string, user: User | null = null, ogOver
             </div>
             <a href="/auth/logout" class="text-sm text-gray-500 hover:text-gray-300 transition">Logout</a>
           </div>
+          <!-- Mobile hamburger -->
+          <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden text-gray-300 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-800 px-4 py-3 space-y-2">
+          <a href="/leaderboard" class="block text-sm text-gray-300 hover:text-white py-1">Leaderboard</a>
+          <a href="/history" class="block text-sm text-gray-300 hover:text-white py-1">History</a>
+          <a href="/about" class="block text-sm text-gray-300 hover:text-white py-1">About</a>
+          <a href="/upload" class="block text-sm text-gray-300 hover:text-white py-1">Upload</a>
+          <a href="/invites" class="block text-sm text-gray-300 hover:text-white py-1">Invites</a>
+          <a href="/settings" class="block text-sm text-gray-300 hover:text-white py-1">Settings</a>
+          ${user.is_admin ? '<a href="/admin" class="block text-sm text-yellow-400 hover:text-yellow-300 py-1">Admin</a>' : ''}
+          <div class="flex items-center gap-2 py-1">
+            ${user.avatar_url ? `<img src="${escapeHtml(user.avatar_url)}" class="w-7 h-7 rounded-full" alt="">` : `<div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(user.display_name.charAt(0))}</div>`}
+            <span class="text-sm text-gray-300">${escapeHtml(user.display_name)}</span>
+          </div>
+          <a href="/auth/logout" class="block text-sm text-gray-500 hover:text-gray-300 py-1">Logout</a>
         </div>
       </nav>`
     : `<nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
@@ -43,11 +64,24 @@ function layout(title: string, content: string, user: User | null = null, ogOver
           <a href="/" class="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
             ccrank.dev
           </a>
-          <div class="flex items-center gap-6">
+          <!-- Desktop nav -->
+          <div class="hidden md:flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
             <a href="/history" class="text-sm text-gray-300 hover:text-white transition">History</a>
+            <a href="/about" class="text-sm text-gray-300 hover:text-white transition">About</a>
             <a href="/login" class="text-sm bg-purple-600 hover:bg-purple-500 text-white px-4 py-1.5 rounded-lg transition">Sign In</a>
           </div>
+          <!-- Mobile hamburger -->
+          <button onclick="document.getElementById('mobile-menu-public').classList.toggle('hidden')" class="md:hidden text-gray-300 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu-public" class="hidden md:hidden border-t border-gray-800 px-4 py-3 space-y-2">
+          <a href="/leaderboard" class="block text-sm text-gray-300 hover:text-white py-1">Leaderboard</a>
+          <a href="/history" class="block text-sm text-gray-300 hover:text-white py-1">History</a>
+          <a href="/about" class="block text-sm text-gray-300 hover:text-white py-1">About</a>
+          <a href="/login" class="block text-sm bg-purple-600 hover:bg-purple-500 text-white px-4 py-1.5 rounded-lg transition text-center">Sign In</a>
         </div>
       </nav>`;
 
@@ -999,7 +1033,7 @@ export function cardPage(
   const rankLabel = `#${stats.rank}`;
   const rankColor = stats.rank === 1 ? '#eab308' : stats.rank === 2 ? '#9ca3af' : stats.rank === 3 ? '#b45309' : '#7c3aed';
   const cardUrl = `https://ccrank.dev/card/${escapeHtml(cardUser.share_slug)}`;
-  const imageUrl = `https://ccrank.dev/card/${escapeHtml(cardUser.share_slug)}/image.svg`;
+  const imageUrl = `https://ccrank.dev/card/${escapeHtml(cardUser.share_slug)}/image.png`;
   const tweetText = encodeURIComponent(`I'm ranked ${rankLabel} on the Claude Code Leaderboard with ${formatCost(stats.total_cost)} spent! Check your ranking at ccrank.dev`);
 
   return `<!DOCTYPE html>
@@ -1415,7 +1449,7 @@ export function profilePage(
       tweetText += '\n\nMy go-to Claude Code tools:';
       favTools.forEach(t => { tweetText += `\n- ${t}`; });
     }
-    tweetText += `\n\nCheck your ranking: ccrank.dev/user/${profileUser.share_slug}`;
+    tweetText += `\n\nCheck your ranking: ccrank.dev/card/${profileUser.share_slug}`;
     const encodedTweet = encodeURIComponent(tweetText);
     shareHtml = `<div class="mb-8">
       <a href="https://x.com/intent/tweet?text=${encodedTweet}"
@@ -1512,9 +1546,9 @@ export function profilePage(
   }
   </script>`;
 
-  const ogImage = `https://ccrank.dev/card/${escapeHtml(profileUser.share_slug)}/image.svg`;
   const ogDesc = `${title.label} ranked #${stats.rank} on ccrank.dev. ${stats.days_active} days active, ${formatTokens(stats.total_tokens)} tokens.`;
 
+  const ogImage = `https://ccrank.dev/card/${profileUser.share_slug}/image.png`;
   return layout('Profile - ' + profileUser.display_name, content, viewer, { image: ogImage, description: ogDesc });
 }
 
