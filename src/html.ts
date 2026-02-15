@@ -1329,6 +1329,186 @@ export function settingsPage(user: User, shareUrl: string | null): string {
   );
 }
 
+function renderHeatmap(data: { date: string; cost: number; tokens: number; sessions: number }[], metric: 'cost' | 'tokens' | 'sessions'): string {
+  const map = new Map<string, number>();
+  data.forEach(d => map.set(d.date, d[metric]));
+
+  const values = data.map(d => d[metric]).filter(v => v > 0);
+  const maxVal = Math.max(...values, 1);
+
+  const today = new Date();
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - 364);
+  startDate.setDate(startDate.getDate() - startDate.getDay());
+
+  let cells = '';
+  const current = new Date(startDate);
+  while (current <= today) {
+    const dateStr = current.toISOString().slice(0, 10);
+    const val = map.get(dateStr) || 0;
+    const intensity = val > 0 ? Math.max(0.15, Math.min(1, val / maxVal)) : 0;
+    const color = val > 0
+      ? `rgba(139, 92, 246, ${intensity})`
+      : 'rgba(55, 65, 81, 0.3)';
+    const label = metric === 'cost' ? formatCost(val) : metric === 'tokens' ? formatTokens(val) : String(val);
+    cells += `<div title="${dateStr}: ${label}" style="background:${color}" class="w-3 h-3 rounded-sm"></div>`;
+    current.setDate(current.getDate() + 1);
+  }
+
+  return `<div class="grid grid-flow-col gap-1" style="grid-template-rows:repeat(7,1fr)">${cells}</div>`;
+}
+
+export function profilePage(
+  profileUser: { display_name: string; avatar_url: string | null; share_slug: string },
+  stats: {
+    total_cost: number;
+    total_tokens: number;
+    total_output_tokens: number;
+    days_active: number;
+    rank: number;
+    last_active: string | null;
+  },
+  favTools: string[],
+  heatmapData: { date: string; cost: number; tokens: number; sessions: number }[],
+  isOwner: boolean,
+  viewer: User | null
+): string {
+  const title = getTitle(stats.total_cost);
+  const rankColor = stats.rank === 1 ? '#eab308' : stats.rank === 2 ? '#9ca3af' : stats.rank === 3 ? '#b45309' : '#7c3aed';
+
+  // Build heatmaps for all 3 metrics server-side
+  const heatmapCost = renderHeatmap(heatmapData, 'cost');
+  const heatmapTokens = renderHeatmap(heatmapData, 'tokens');
+  const heatmapSessions = renderHeatmap(heatmapData, 'sessions');
+
+  // Favorite tools section
+  let favToolsHtml: string;
+  if (favTools.length > 0) {
+    const pills = favTools.map(t => `<span class="inline-block bg-purple-600/20 text-purple-300 border border-purple-700/50 text-sm px-3 py-1 rounded-full">${escapeHtml(t)}</span>`).join(' ');
+    favToolsHtml = `<div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-lg font-semibold mb-3">Tools I can't live without</h2>
+      <div class="flex flex-wrap gap-2">${pills}</div>
+    </div>`;
+  } else if (isOwner) {
+    favToolsHtml = `<div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-lg font-semibold mb-3">Tools I can't live without</h2>
+      <p class="text-sm text-gray-500">You haven't set any favorite tools yet. <a href="/settings" class="text-purple-400 hover:text-purple-300 transition">Add them in Settings</a></p>
+    </div>`;
+  } else {
+    favToolsHtml = `<div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-lg font-semibold mb-3">Tools I can't live without</h2>
+      <p class="text-sm text-gray-500">No favorites set yet</p>
+    </div>`;
+  }
+
+  // Share on X button
+  let shareHtml = '';
+  if (stats.total_tokens > 0) {
+    let tweetText = `I'm ranked #${stats.rank} on ccrank.dev!`;
+    if (favTools.length > 0) {
+      tweetText += '\n\nMy go-to Claude Code tools:';
+      favTools.forEach(t => { tweetText += `\n- ${t}`; });
+    }
+    tweetText += `\n\nCheck your ranking: ccrank.dev/user/${profileUser.share_slug}`;
+    const encodedTweet = encodeURIComponent(tweetText);
+    shareHtml = `<div class="mb-8">
+      <a href="https://x.com/intent/tweet?text=${encodedTweet}"
+         target="_blank" rel="noopener"
+         class="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg px-5 py-2.5 transition">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        Share on X
+      </a>
+    </div>`;
+  }
+
+  const content = `<div class="max-w-4xl mx-auto">
+    <!-- Profile Header -->
+    <div class="flex items-center gap-6 mb-8">
+      ${profileUser.avatar_url
+        ? `<img src="${escapeHtml(profileUser.avatar_url)}" class="w-20 h-20 rounded-full ring-2" style="--tw-ring-color: ${rankColor};" alt="">`
+        : `<div class="w-20 h-20 rounded-full bg-purple-600 flex items-center justify-center text-3xl font-bold ring-2" style="--tw-ring-color: ${rankColor};">${escapeHtml(profileUser.display_name.charAt(0))}</div>`}
+      <div>
+        <h1 class="text-2xl font-bold mb-1">${escapeHtml(profileUser.display_name)}</h1>
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-semibold" style="color: ${title.color};">${title.label}</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-700/50">#${stats.rank}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 ${isOwner ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4 mb-8">
+      ${isOwner ? `<div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Total Cost</div>
+        <div class="text-xl font-bold text-purple-400">${formatCost(stats.total_cost)}</div>
+      </div>` : ''}
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Total Tokens</div>
+        <div class="text-xl font-bold text-cyan-400">${formatTokens(stats.total_tokens)}</div>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Output Tokens</div>
+        <div class="text-xl font-bold text-green-400">${formatTokens(stats.total_output_tokens)}</div>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Days Active</div>
+        <div class="text-xl font-bold text-yellow-400">${stats.days_active}</div>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Last Active</div>
+        <div class="text-xl font-bold text-gray-300">${timeAgo(stats.last_active)}</div>
+      </div>
+    </div>
+
+    <!-- Activity Heatmap -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Activity</h2>
+        <div class="flex gap-1">
+          <button id="tab-cost" onclick="showHeatmap('cost')" class="px-3 py-1 text-xs font-medium rounded-md bg-purple-600 text-white transition">Cost</button>
+          <button id="tab-tokens" onclick="showHeatmap('tokens')" class="px-3 py-1 text-xs font-medium rounded-md bg-gray-700 text-gray-400 transition">Tokens</button>
+          <button id="tab-sessions" onclick="showHeatmap('sessions')" class="px-3 py-1 text-xs font-medium rounded-md bg-gray-700 text-gray-400 transition">Sessions</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <div id="heatmap-cost">${heatmapCost}</div>
+        <div id="heatmap-tokens" class="hidden">${heatmapTokens}</div>
+        <div id="heatmap-sessions" class="hidden">${heatmapSessions}</div>
+      </div>
+      <div class="flex items-center justify-end gap-2 mt-3 text-xs text-gray-500">
+        <span>Less</span>
+        <div class="w-3 h-3 rounded-sm" style="background:rgba(55,65,81,0.3)"></div>
+        <div class="w-3 h-3 rounded-sm" style="background:rgba(139,92,246,0.25)"></div>
+        <div class="w-3 h-3 rounded-sm" style="background:rgba(139,92,246,0.5)"></div>
+        <div class="w-3 h-3 rounded-sm" style="background:rgba(139,92,246,0.75)"></div>
+        <div class="w-3 h-3 rounded-sm" style="background:rgba(139,92,246,1)"></div>
+        <span>More</span>
+      </div>
+    </div>
+
+    <!-- Favorite Tools -->
+    ${favToolsHtml}
+
+    <!-- Share on X -->
+    ${shareHtml}
+  </div>
+
+  <script>
+  function showHeatmap(metric) {
+    ['cost', 'tokens', 'sessions'].forEach(m => {
+      document.getElementById('heatmap-' + m).classList.toggle('hidden', m !== metric);
+      const tab = document.getElementById('tab-' + m);
+      tab.classList.toggle('bg-purple-600', m === metric);
+      tab.classList.toggle('text-white', m === metric);
+      tab.classList.toggle('bg-gray-700', m !== metric);
+      tab.classList.toggle('text-gray-400', m !== metric);
+    });
+  }
+  </script>`;
+
+  return layout('Profile - ' + profileUser.display_name, content, viewer);
+}
+
 export function errorPage(title: string, message: string, user: User | null = null): string {
   return layout(
     title,

@@ -25,6 +25,7 @@ export interface LeaderboardEntry {
   total_output_tokens: number;
   days_active: number;
   last_active: string | null;
+  share_slug?: string | null;
 }
 
 export type ViewType = 'daily' | 'weekly' | 'monthly';

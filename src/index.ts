@@ -24,6 +24,7 @@ import {
   aboutPage,
   cardPage,
   settingsPage,
+  profilePage,
   errorPage,
 } from './html';
 import { isValidView, isValidDateString, getDateRange, sanitizeSource, slugify, isValidSlug, type ViewType } from './utils';
@@ -312,6 +313,57 @@ app.get('/admin', async (c) => {
       total_invites: (inviteCount as any)?.cnt ?? 0,
     }, (allCodes.results || []) as any[])
   );
+});
+
+// ─── User Profile (public) ───────────────────────────────────────────────────────
+
+app.get('/user/:slug', async (c) => {
+  const slug = c.req.param('slug');
+  const profileUser = await c.env.DB.prepare(
+    'SELECT id, display_name, avatar_url, share_slug, fav_tools FROM users WHERE share_slug = ? AND sharing_enabled = 1'
+  ).bind(slug).first();
+
+  if (!profileUser) return c.html(errorPage('Not Found', 'This profile does not exist or is not public.'), 404);
+
+  const stats = await c.env.DB.prepare(
+    `SELECT COALESCE(SUM(cost_usd), 0) as total_cost, COALESCE(SUM(total_tokens), 0) as total_tokens,
+     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COUNT(DISTINCT date) as days_active, MAX(date) as last_active
+     FROM daily_usage WHERE user_id = ?`
+  ).bind((profileUser as any).id).first();
+
+  const rankResult = await c.env.DB.prepare(
+    `SELECT COUNT(*) + 1 as rank FROM (SELECT user_id, SUM(cost_usd) as total_cost FROM daily_usage GROUP BY user_id)
+     WHERE total_cost > (SELECT COALESCE(SUM(cost_usd), 0) FROM daily_usage WHERE user_id = ?)`
+  ).bind((profileUser as any).id).first();
+
+  // Heatmap: daily data for past 365 days
+  const heatmapRows = await c.env.DB.prepare(
+    `SELECT date, COALESCE(SUM(cost_usd), 0) as cost, COALESCE(SUM(total_tokens), 0) as tokens, COUNT(*) as sessions
+     FROM daily_usage WHERE user_id = ? AND date >= date('now', '-365 days') GROUP BY date`
+  ).bind((profileUser as any).id).all();
+
+  const favTools: string[] = (() => {
+    try { return JSON.parse((profileUser as any).fav_tools || '[]'); } catch { return []; }
+  })();
+
+  const viewer = c.get('user');
+  const isOwner = viewer?.id === (profileUser as any).id;
+
+  return c.html(profilePage(
+    { display_name: (profileUser as any).display_name, avatar_url: (profileUser as any).avatar_url, share_slug: (profileUser as any).share_slug },
+    {
+      total_cost: (stats as any)?.total_cost ?? 0,
+      total_tokens: (stats as any)?.total_tokens ?? 0,
+      total_output_tokens: (stats as any)?.total_output_tokens ?? 0,
+      days_active: (stats as any)?.days_active ?? 0,
+      rank: (rankResult as any)?.rank ?? 0,
+      last_active: (stats as any)?.last_active ?? null,
+    },
+    favTools,
+    (heatmapRows.results || []).map((r: any) => ({ date: r.date, cost: r.cost, tokens: r.tokens, sessions: r.sessions })),
+    isOwner,
+    viewer
+  ));
 });
 
 // ─── Card Routes (public) ────────────────────────────────────────────────────────
