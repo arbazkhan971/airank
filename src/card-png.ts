@@ -3,7 +3,7 @@
  * Uses inline styles (workers-og parses HTML and renders via satori+resvg).
  * Must use only CSS properties supported by satori (flexbox, no grid).
  */
-import { formatTokens, formatCost, getTitle } from './utils';
+import { formatTokens, formatCost, getTitle, formatEfficiency } from './utils';
 import type { CardData } from './card';
 
 function getRankAccent(rank: number): { color: string; label: string } {
@@ -71,6 +71,11 @@ export function generateCardHtml(data: CardData, mode: 'simple' | 'full'): strin
         <div style="display: flex; font-size: 16px; color: #9ca3af;">Days Active</div>
       </div>
     </div>
+
+    ${data.outputPerDollar ? `<div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;">
+      <div style="display: flex; font-size: 28px; font-weight: 700; color: #34d399;">${formatEfficiency(data.outputPerDollar)} tokens/$</div>
+      <div style="display: flex; font-size: 16px; color: #9ca3af;">efficiency</div>
+    </div>` : ''}
 
     ${favToolsHtml}
     ${lastActiveHtml}

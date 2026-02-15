@@ -26,7 +26,13 @@ export interface LeaderboardEntry {
   days_active: number;
   last_active: string | null;
   share_slug?: string | null;
+  output_per_dollar: number;
+  cache_rate: number;
+  output_ratio: number;
+  meets_efficiency_threshold: boolean;
 }
+
+export type SortKey = 'cost' | 'output_per_dollar' | 'cache_rate' | 'output_ratio';
 
 export type ViewType = 'daily' | 'weekly' | 'monthly';
 
@@ -50,6 +56,16 @@ export function formatTokens(n: number): string {
 
 export function formatCost(n: number): string {
   return '$' + n.toFixed(2);
+}
+
+export function formatEfficiency(value: number): string {
+  if (value >= 1_000_000) return (value / 1_000_000).toFixed(1) + 'M';
+  if (value >= 1_000) return (value / 1_000).toFixed(1) + 'K';
+  return Math.round(value).toString();
+}
+
+export function formatPercent(value: number): string {
+  return (value * 100).toFixed(1) + '%';
 }
 
 export function timeAgo(dateStr: string | null): string {

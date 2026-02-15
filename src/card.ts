@@ -6,7 +6,7 @@
  */
 import satori, { init } from 'satori/standalone';
 import yogaWasm from './yoga.wasm';
-import { getTitle, formatTokens, formatCost } from './utils';
+import { getTitle, formatTokens, formatCost, formatEfficiency } from './utils';
 
 // Track yoga WASM initialization
 let yogaInitialized = false;
@@ -39,6 +39,7 @@ export interface CardData {
   daysActive: number;
   lastActive: string | null;
   favTools?: string[];
+  outputPerDollar?: number;
 }
 
 function getRankAccent(rank: number): { color: string; label: string } {
@@ -215,6 +216,36 @@ export async function generateCardSvg(data: CardData, mode: 'simple' | 'full'): 
       },
     },
   ];
+
+  if (data.outputPerDollar) {
+    children.push({
+      type: 'div',
+      props: {
+        style: {
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 8,
+          marginBottom: 16,
+        },
+        children: [
+          {
+            type: 'div',
+            props: {
+              style: { fontSize: 28, fontWeight: 700, color: '#34d399' },
+              children: `${formatEfficiency(data.outputPerDollar)} tokens/$`,
+            },
+          },
+          {
+            type: 'div',
+            props: {
+              style: { fontSize: 16, color: '#9ca3af' },
+              children: 'efficiency',
+            },
+          },
+        ],
+      },
+    });
+  }
 
   if (mode === 'full' && data.favTools && data.favTools.length > 0) {
     children.push({

@@ -243,6 +243,9 @@ app.get('/', async (c) => {
 
 app.get('/leaderboard', async (c) => {
   const user = c.get('user');
+  const sortParam = c.req.query('sort') || 'cost';
+  const sort = ['cost', 'output_per_dollar', 'cache_rate', 'output_ratio'].includes(sortParam) ? sortParam : 'cost';
+
   const results = await c.env.DB.prepare(
     `SELECT
       u.display_name,
@@ -251,8 +254,18 @@ app.get('/leaderboard', async (c) => {
       COALESCE(SUM(d.cost_usd), 0) as total_cost,
       COALESCE(SUM(d.total_tokens), 0) as total_tokens,
       COALESCE(SUM(d.output_tokens), 0) as total_output_tokens,
+      COALESCE(SUM(d.cache_read_tokens), 0) as total_cache_read,
       COUNT(DISTINCT d.date) as days_active,
-      MAX(d.date) as last_active
+      MAX(d.date) as last_active,
+      CASE WHEN COALESCE(SUM(d.cost_usd), 0) > 0
+        THEN COALESCE(SUM(d.output_tokens), 0) / COALESCE(SUM(d.cost_usd), 1)
+        ELSE 0 END as output_per_dollar,
+      CASE WHEN COALESCE(SUM(d.total_tokens), 0) > 0
+        THEN CAST(COALESCE(SUM(d.cache_read_tokens), 0) AS REAL) / COALESCE(SUM(d.total_tokens), 1)
+        ELSE 0 END as cache_rate,
+      CASE WHEN COALESCE(SUM(d.total_tokens), 0) > 0
+        THEN CAST(COALESCE(SUM(d.output_tokens), 0) AS REAL) / COALESCE(SUM(d.total_tokens), 1)
+        ELSE 0 END as output_ratio
     FROM users u
     LEFT JOIN daily_usage d ON u.id = d.user_id
     GROUP BY u.id
@@ -260,8 +273,7 @@ app.get('/leaderboard', async (c) => {
     ORDER BY total_cost DESC`
   ).all();
 
-  const entries = (results.results || []).map((row: any, i: number) => ({
-    rank: i + 1,
+  const allRows = (results.results || []).map((row: any) => ({
     display_name: row.display_name,
     avatar_url: row.avatar_url,
     share_slug: row.share_slug || null,
@@ -270,9 +282,26 @@ app.get('/leaderboard', async (c) => {
     total_output_tokens: row.total_output_tokens,
     days_active: row.days_active,
     last_active: row.last_active,
+    output_per_dollar: row.output_per_dollar,
+    cache_rate: row.cache_rate,
+    output_ratio: row.output_ratio,
+    meets_efficiency_threshold: row.total_cost >= 100 && row.days_active >= 10,
   }));
 
-  return c.html(leaderboardPage(entries, user));
+  let entries;
+  if (sort === 'cost') {
+    entries = allRows.map((row: any, i: number) => ({ ...row, rank: i + 1 }));
+  } else {
+    const qualified = allRows.filter((r: any) => r.meets_efficiency_threshold);
+    const unqualified = allRows.filter((r: any) => !r.meets_efficiency_threshold);
+    qualified.sort((a: any, b: any) => b[sort] - a[sort]);
+    entries = [
+      ...qualified.map((row: any, i: number) => ({ ...row, rank: i + 1 })),
+      ...unqualified.map((row: any) => ({ ...row, rank: 0 })),
+    ];
+  }
+
+  return c.html(leaderboardPage(entries, user, sort));
 });
 
 app.get('/upload', (c) => {
@@ -337,7 +366,8 @@ app.get('/user/:slug', async (c) => {
 
   const stats = await c.env.DB.prepare(
     `SELECT COALESCE(SUM(cost_usd), 0) as total_cost, COALESCE(SUM(total_tokens), 0) as total_tokens,
-     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COUNT(DISTINCT date) as days_active, MAX(date) as last_active
+     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COALESCE(SUM(cache_read_tokens), 0) as total_cache_read,
+     COUNT(DISTINCT date) as days_active, MAX(date) as last_active
      FROM daily_usage WHERE user_id = ?`
   ).bind((profileUser as any).id).first();
 
@@ -359,13 +389,23 @@ app.get('/user/:slug', async (c) => {
   const viewer = c.get('user');
   const isOwner = viewer?.id === (profileUser as any).id;
 
+  const totalCost = (stats as any)?.total_cost ?? 0;
+  const totalTokens = (stats as any)?.total_tokens ?? 0;
+  const totalOutputTokens = (stats as any)?.total_output_tokens ?? 0;
+  const totalCacheRead = (stats as any)?.total_cache_read ?? 0;
+  const daysActive = (stats as any)?.days_active ?? 0;
+
   const statsObj = {
-    total_cost: (stats as any)?.total_cost ?? 0,
-    total_tokens: (stats as any)?.total_tokens ?? 0,
-    total_output_tokens: (stats as any)?.total_output_tokens ?? 0,
-    days_active: (stats as any)?.days_active ?? 0,
+    total_cost: totalCost,
+    total_tokens: totalTokens,
+    total_output_tokens: totalOutputTokens,
+    days_active: daysActive,
     rank: (rankResult as any)?.rank ?? 0,
     last_active: (stats as any)?.last_active ?? null,
+    output_per_dollar: totalCost > 0 ? totalOutputTokens / totalCost : 0,
+    cache_rate: totalTokens > 0 ? totalCacheRead / totalTokens : 0,
+    output_ratio: totalTokens > 0 ? totalOutputTokens / totalTokens : 0,
+    meets_efficiency_threshold: totalCost >= 100 && daysActive >= 10,
   };
 
   // Fire-and-forget: generate full card SVG and upload to Sirv for PNG OG image
@@ -380,6 +420,7 @@ app.get('/user/:slug', async (c) => {
       daysActive: statsObj.days_active,
       lastActive: statsObj.last_active,
       favTools,
+      outputPerDollar: statsObj.meets_efficiency_threshold && statsObj.total_cost > 0 ? statsObj.output_per_dollar : undefined,
     };
     c.executionCtx.waitUntil(
       generateCardSvg(cardData, 'full')
@@ -410,7 +451,8 @@ app.get('/card/:slug/image.svg', async (c) => {
 
   const stats = await c.env.DB.prepare(
     `SELECT COALESCE(SUM(cost_usd), 0) as total_cost, COALESCE(SUM(total_tokens), 0) as total_tokens,
-     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COUNT(DISTINCT date) as days_active, MAX(date) as last_active
+     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COALESCE(SUM(cache_read_tokens), 0) as total_cache_read,
+     COUNT(DISTINCT date) as days_active, MAX(date) as last_active
      FROM daily_usage WHERE user_id = ?`
   ).bind((user as any).id).first();
 
@@ -425,16 +467,22 @@ app.get('/card/:slug/image.svg', async (c) => {
     try { return JSON.parse((user as any).fav_tools || '[]'); } catch { return []; }
   })();
 
+  const totalCost = (stats as any)?.total_cost ?? 0;
+  const totalOutputTokens = (stats as any)?.total_output_tokens ?? 0;
+  const daysActive = (stats as any)?.days_active ?? 0;
+  const meetsThreshold = totalCost >= 100 && daysActive >= 10;
+
   const cardData: CardData = {
     displayName: (user as any).display_name,
     avatarUrl: (user as any).avatar_url,
     rank: (rankResult as any)?.rank ?? 0,
-    totalCost: (stats as any)?.total_cost ?? 0,
+    totalCost,
     totalTokens: (stats as any)?.total_tokens ?? 0,
-    totalOutputTokens: (stats as any)?.total_output_tokens ?? 0,
-    daysActive: (stats as any)?.days_active ?? 0,
+    totalOutputTokens,
+    daysActive,
     lastActive: (stats as any)?.last_active ?? null,
     favTools: mode === 'full' ? favTools : undefined,
+    outputPerDollar: meetsThreshold && totalCost > 0 ? totalOutputTokens / totalCost : undefined,
   };
 
   const svg = await generateCardSvg(cardData, mode);
@@ -465,7 +513,8 @@ app.get('/card/:slug/image.png', async (c) => {
 
   const stats = await c.env.DB.prepare(
     `SELECT COALESCE(SUM(cost_usd), 0) as total_cost, COALESCE(SUM(total_tokens), 0) as total_tokens,
-     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COUNT(DISTINCT date) as days_active, MAX(date) as last_active
+     COALESCE(SUM(output_tokens), 0) as total_output_tokens, COALESCE(SUM(cache_read_tokens), 0) as total_cache_read,
+     COUNT(DISTINCT date) as days_active, MAX(date) as last_active
      FROM daily_usage WHERE user_id = ?`
   ).bind((user as any).id).first();
 
@@ -480,16 +529,22 @@ app.get('/card/:slug/image.png', async (c) => {
     try { return JSON.parse((user as any).fav_tools || '[]'); } catch { return []; }
   })();
 
+  const pngTotalCost = (stats as any)?.total_cost ?? 0;
+  const pngTotalOutputTokens = (stats as any)?.total_output_tokens ?? 0;
+  const pngDaysActive = (stats as any)?.days_active ?? 0;
+  const pngMeetsThreshold = pngTotalCost >= 100 && pngDaysActive >= 10;
+
   const cardData: CardData = {
     displayName: (user as any).display_name,
     avatarUrl: (user as any).avatar_url,
     rank: (rankResult as any)?.rank ?? 0,
-    totalCost: (stats as any)?.total_cost ?? 0,
+    totalCost: pngTotalCost,
     totalTokens: (stats as any)?.total_tokens ?? 0,
-    totalOutputTokens: (stats as any)?.total_output_tokens ?? 0,
-    daysActive: (stats as any)?.days_active ?? 0,
+    totalOutputTokens: pngTotalOutputTokens,
+    daysActive: pngDaysActive,
     lastActive: (stats as any)?.last_active ?? null,
     favTools: mode === 'full' ? favTools : undefined,
+    outputPerDollar: pngMeetsThreshold && pngTotalCost > 0 ? pngTotalOutputTokens / pngTotalCost : undefined,
   };
 
   const html = generateCardHtml(cardData, mode);
@@ -813,8 +868,18 @@ app.get('/api/leaderboard', async (c) => {
       COALESCE(SUM(d.cost_usd), 0) as total_cost,
       COALESCE(SUM(d.total_tokens), 0) as total_tokens,
       COALESCE(SUM(d.output_tokens), 0) as total_output_tokens,
+      COALESCE(SUM(d.cache_read_tokens), 0) as total_cache_read,
       COUNT(DISTINCT d.date) as days_active,
-      MAX(d.date) as last_active
+      MAX(d.date) as last_active,
+      CASE WHEN COALESCE(SUM(d.cost_usd), 0) > 0
+        THEN COALESCE(SUM(d.output_tokens), 0) / COALESCE(SUM(d.cost_usd), 1)
+        ELSE 0 END as output_per_dollar,
+      CASE WHEN COALESCE(SUM(d.total_tokens), 0) > 0
+        THEN CAST(COALESCE(SUM(d.cache_read_tokens), 0) AS REAL) / COALESCE(SUM(d.total_tokens), 1)
+        ELSE 0 END as cache_rate,
+      CASE WHEN COALESCE(SUM(d.total_tokens), 0) > 0
+        THEN CAST(COALESCE(SUM(d.output_tokens), 0) AS REAL) / COALESCE(SUM(d.total_tokens), 1)
+        ELSE 0 END as output_ratio
     FROM users u
     LEFT JOIN daily_usage d ON u.id = d.user_id
     GROUP BY u.id
@@ -832,6 +897,9 @@ app.get('/api/leaderboard', async (c) => {
       total_cost: row.total_cost,
       total_tokens: row.total_tokens,
       total_output_tokens: row.total_output_tokens,
+      output_per_dollar: row.output_per_dollar,
+      cache_rate: row.cache_rate,
+      output_ratio: row.output_ratio,
       days_active: row.days_active,
       last_active: row.last_active,
     })),

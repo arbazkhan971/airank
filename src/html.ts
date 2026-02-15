@@ -8,9 +8,12 @@ import {
   type LeaderboardEntry,
   type ViewType,
   type DateRange,
+  type SortKey,
   getTitle,
   formatTokens,
   formatCost,
+  formatEfficiency,
+  formatPercent,
   timeAgo,
   escapeHtml,
 } from './utils';
@@ -446,16 +449,18 @@ export function dashboardPage(user: User, stats: { total_cost: number; total_tok
   );
 }
 
-export function leaderboardPage(entries: LeaderboardEntry[], user: User | null = null): string {
+export function leaderboardPage(entries: LeaderboardEntry[], user: User | null = null, sort: string = 'cost'): string {
+  const isEfficiencySort = sort !== 'cost';
+
   const rows = entries
     .map((e) => {
       const title = getTitle(e.total_cost);
-      const rankClass = e.rank <= 3 ? `rank-${e.rank}` : '';
+      const rankClass = e.rank >= 1 && e.rank <= 3 ? `rank-${e.rank}` : '';
       const medal = e.rank === 1 ? '<span class="text-yellow-400 text-lg mr-1">&#x1f947;</span>' : e.rank === 2 ? '<span class="text-gray-300 text-lg mr-1">&#x1f948;</span>' : e.rank === 3 ? '<span class="text-amber-600 text-lg mr-1">&#x1f949;</span>' : '';
-      return `<tr class="border-b border-gray-800/50 hover:bg-gray-800/30 transition ${rankClass}">
-        <td class="py-3 px-4 text-center font-mono text-sm">
-          ${medal}${e.rank}
-        </td>
+      const dimClass = isEfficiencySort && e.rank === 0 ? 'opacity-50' : '';
+      const rankDisplay = e.rank === 0 ? '—' : `${medal}${e.rank}`;
+      return `<tr class="border-b border-gray-800/50 hover:bg-gray-800/30 transition ${rankClass} ${dimClass}">
+        <td class="py-3 px-4 text-center font-mono text-sm">${rankDisplay}</td>
         <td class="py-3 px-4">
           <div class="flex items-center gap-3">
             ${e.avatar_url ? `<img src="${escapeHtml(e.avatar_url)}" class="w-8 h-8 rounded-full" alt="">` : `<div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(e.display_name.charAt(0))}</div>`}
@@ -468,19 +473,36 @@ export function leaderboardPage(entries: LeaderboardEntry[], user: User | null =
           </div>
         </td>
         <td class="py-3 px-4 text-right font-mono text-purple-400">${formatCost(e.total_cost)}</td>
-        <td class="py-3 px-4 text-right font-mono text-cyan-400">${formatTokens(e.total_tokens)}</td>
-        <td class="py-3 px-4 text-right font-mono text-green-400">${formatTokens(e.total_output_tokens)}</td>
+        <td class="py-3 px-4 text-right font-mono text-emerald-400">${formatEfficiency(e.output_per_dollar)} t/$</td>
+        <td class="py-3 px-4 text-right font-mono text-blue-400">${formatPercent(e.cache_rate)}</td>
+        <td class="py-3 px-4 text-right font-mono text-amber-400">${formatPercent(e.output_ratio)}</td>
         <td class="py-3 px-4 text-right text-sm text-gray-400">${e.days_active}</td>
         <td class="py-3 px-4 text-right text-sm text-gray-500">${timeAgo(e.last_active)}</td>
       </tr>`;
     })
     .join('');
 
+  const sortOptions = [
+    { key: 'cost', label: 'Cost' },
+    { key: 'output_per_dollar', label: 'Output/$' },
+    { key: 'cache_rate', label: 'Cache Rate' },
+    { key: 'output_ratio', label: 'Output Ratio' },
+  ];
+  const tabsHtml = sortOptions.map(s => {
+    const isActive = s.key === sort;
+    return `<a href="/leaderboard?sort=${s.key}" class="px-4 py-2 text-sm font-medium rounded-lg transition ${isActive ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}">${s.label}</a>`;
+  }).join('');
+
   return layout(
     'Leaderboard',
     `<div class="mb-8">
-      <h1 class="text-2xl font-bold mb-1">Leaderboard</h1>
-      <p class="text-gray-400">Who's burning the most Claude tokens?</p>
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-2xl font-bold mb-1">Leaderboard</h1>
+          <p class="text-gray-400">${isEfficiencySort ? 'Ranked by efficiency. $100 min + 10 days to qualify.' : 'Who\'s burning the most Claude tokens?'}</p>
+        </div>
+        <div class="flex gap-1">${tabsHtml}</div>
+      </div>
     </div>
 
     ${entries.length === 0
@@ -496,8 +518,9 @@ export function leaderboardPage(entries: LeaderboardEntry[], user: User | null =
                 <th class="py-3 px-4 text-center w-16">Rank</th>
                 <th class="py-3 px-4 text-left">User</th>
                 <th class="py-3 px-4 text-right">Cost</th>
-                <th class="py-3 px-4 text-right">Total Tokens</th>
-                <th class="py-3 px-4 text-right">Output Tokens</th>
+                <th class="py-3 px-4 text-right">Output/$</th>
+                <th class="py-3 px-4 text-right">Cache Rate</th>
+                <th class="py-3 px-4 text-right">Output %</th>
                 <th class="py-3 px-4 text-right">Days</th>
                 <th class="py-3 px-4 text-right">Last Active</th>
               </tr>
@@ -1407,6 +1430,10 @@ export function profilePage(
     days_active: number;
     rank: number;
     last_active: string | null;
+    output_per_dollar: number;
+    cache_rate: number;
+    output_ratio: number;
+    meets_efficiency_threshold: boolean;
   },
   favTools: string[],
   heatmapData: { date: string; cost: number; tokens: number; sessions: number }[],
@@ -1499,6 +1526,22 @@ export function profilePage(
         <div class="text-xl font-bold text-gray-300">${timeAgo(stats.last_active)}</div>
       </div>
     </div>
+
+    <!-- Efficiency Stats Row -->
+    ${stats.meets_efficiency_threshold ? `<div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Output/$</div>
+        <div class="text-xl font-bold text-emerald-400">${formatEfficiency(stats.output_per_dollar)} <span class="text-sm font-normal text-gray-500">tokens/$</span></div>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Cache Rate</div>
+        <div class="text-xl font-bold text-blue-400">${formatPercent(stats.cache_rate)}</div>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <div class="text-sm text-gray-400 mb-1">Output Ratio</div>
+        <div class="text-xl font-bold text-amber-400">${formatPercent(stats.output_ratio)}</div>
+      </div>
+    </div>` : ''}
 
     <!-- Activity Heatmap -->
     <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
