@@ -21,7 +21,7 @@ function layout(title: string, content: string, user: User | null = null): strin
     ? `<nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <a href="/" class="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-            Claude Leaderboard
+            ccrank.dev
           </a>
           <div class="flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
@@ -41,7 +41,7 @@ function layout(title: string, content: string, user: User | null = null): strin
     : `<nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <a href="/" class="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-            Claude Leaderboard
+            ccrank.dev
           </a>
           <div class="flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
@@ -56,21 +56,21 @@ function layout(title: string, content: string, user: User | null = null): strin
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)} - Claude Leaderboard by Akash</title>
+  <title>${escapeHtml(title)} | ccrank.dev</title>
   <meta name="author" content="Akash Mahajan">
   <meta name="description" content="Track and compare your Claude Code usage. Upload ccusage reports and compete on the leaderboard.">
-  <meta property="og:title" content="${escapeHtml(title)} - Claude Leaderboard by Akash">
+  <meta property="og:title" content="${escapeHtml(title)} | ccrank.dev">
   <meta property="og:description" content="Track and compare your Claude Code usage. Upload ccusage reports and see where you rank.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://ccrank.dev/card/makash/image.svg">
+  <meta property="og:image" content="https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@makash">
-  <meta name="twitter:title" content="${escapeHtml(title)} - Claude Leaderboard by Akash">
+  <meta name="twitter:title" content="${escapeHtml(title)} | ccrank.dev">
   <meta name="twitter:description" content="Track and compare your Claude Code usage. Upload ccusage reports and see where you rank.">
-  <meta name="twitter:image" content="https://ccrank.dev/card/makash/image.svg">
-  <meta property="og:site_name" content="Claude Leaderboard by Akash">
+  <meta name="twitter:image" content="https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp">
+  <meta property="og:site_name" content="ccrank.dev">
   <meta property="og:url" content="https://ccrank.dev/">
   <link rel="canonical" href="https://ccrank.dev/">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f3c6;</text></svg>">
@@ -128,10 +128,10 @@ function layout(title: string, content: string, user: User | null = null): strin
   <footer class="border-t border-gray-800 mt-16 py-8 text-center">
     <div class="max-w-6xl mx-auto px-4">
       <p class="text-sm text-gray-500 mb-1">
-        Built by <a href="https://github.com/makash?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=branding" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Akash Mahajan</a>
+        by <a href="https://x.com/makash?utm_source=ccrank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">@makash</a>
       </p>
       <p class="text-xs text-gray-600 mb-3">
-        Powered by <a href="https://github.com/ryoppippi/ccusage?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=branding" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">ccusage</a>
+        Powered by <a href="https://github.com/ryoppippi/ccusage?utm_source=ccrank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">ccusage</a> <span class="mx-1">|</span> <a href="https://github.com/makash/claude-leaderboard-using-ccusage?utm_source=ccrank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">Open Source</a>
       </p>
       <div class="flex items-center justify-center gap-4">
         <a href="https://x.com/makash?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=branding" target="_blank" rel="noopener" class="text-gray-600 hover:text-gray-300 transition" title="X / Twitter">
@@ -226,12 +226,12 @@ export function landingPage(topEntries: LeaderboardEntry[]): string {
     `<div class="flex flex-col items-center justify-center min-h-[70vh] text-center">
       <div class="mb-12">
         <h1 class="text-6xl font-extrabold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent leading-tight">
-          Claude Leaderboard
+          ccrank.dev
         </h1>
-        <p class="text-sm font-medium text-purple-400 mb-3 tracking-wide uppercase">by Akash Mahajan</p>
         <p class="text-xl text-gray-400 max-w-lg mx-auto leading-relaxed">
           Who on your team burns the most Claude tokens? Find out.
         </p>
+        <p class="text-xs text-gray-500 mt-2">by <a href="https://x.com/makash?utm_source=ccrank&utm_medium=web&utm_campaign=hero" target="_blank" rel="noopener" class="text-gray-400 hover:text-gray-300 transition">@makash</a></p>
       </div>
 
       ${podiumSection}
@@ -780,6 +780,11 @@ export function aboutPage(user: User | null = null): string {
     `<div class="max-w-2xl mx-auto">
       <h1 class="text-3xl font-extrabold mb-2">The Story Behind ccrank.dev</h1>
       <p class="text-gray-400 mb-10">How a WhatsApp message became a live leaderboard in minutes.</p>
+
+      <p class="text-gray-400 mb-8 text-lg leading-relaxed">
+        ccrank.dev is an open-source developer ranking platform for Claude Code usage.
+        Track, compare, and compete on your team's AI-assisted development metrics.
+      </p>
 
       <!-- The Spark -->
       <section class="mb-10">
