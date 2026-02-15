@@ -175,7 +175,9 @@ export function landingPage(topEntries: LeaderboardEntry[]): string {
           ? `<img src="${escapeHtml(e.avatar_url)}" class="${avatarSize} rounded-full mx-auto ${avatarRing} ${ringColor}" alt="">`
           : `<div class="${avatarSize} rounded-full bg-purple-600 flex items-center justify-center ${avatarText} font-bold mx-auto ${avatarRing} ${ringColor}">${escapeHtml(e.display_name.charAt(0))}</div>`}
       </div>
-      <div class="font-semibold ${isFirst ? 'text-xl' : 'text-lg'} mb-1">${escapeHtml(e.display_name)}</div>
+      <div class="font-semibold ${isFirst ? 'text-xl' : 'text-lg'} mb-1">${e.share_slug
+        ? `<a href="/user/${escapeHtml(e.share_slug)}" class="hover:text-purple-300 transition">${escapeHtml(e.display_name)}</a>`
+        : escapeHtml(e.display_name)}</div>
       <div class="text-xs mb-3" style="color:${title.color}">${title.label}</div>
       <div class="${costSize} font-bold text-purple-400 mb-1">${formatCost(e.total_cost)}</div>
       <div class="text-xs text-gray-500">${formatTokens(e.total_tokens)} tokens &middot; ${e.days_active}d active</div>
@@ -424,7 +426,9 @@ export function leaderboardPage(entries: LeaderboardEntry[], user: User | null =
           <div class="flex items-center gap-3">
             ${e.avatar_url ? `<img src="${escapeHtml(e.avatar_url)}" class="w-8 h-8 rounded-full" alt="">` : `<div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(e.display_name.charAt(0))}</div>`}
             <div>
-              <div class="font-medium">${escapeHtml(e.display_name)}</div>
+              <div class="font-medium">${e.share_slug
+                ? `<a href="/user/${escapeHtml(e.share_slug)}" class="hover:text-purple-400 transition">${escapeHtml(e.display_name)}</a>`
+                : escapeHtml(e.display_name)}</div>
               <div class="text-xs" style="color:${title.color}">${title.label}</div>
             </div>
           </div>
@@ -918,7 +922,9 @@ export function historyPage(
             <div class="flex items-center gap-3">
               ${e.avatar_url ? `<img src="${escapeHtml(e.avatar_url)}" class="w-8 h-8 rounded-full" alt="">` : `<div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(e.display_name.charAt(0))}</div>`}
               <div>
-                <div class="font-medium">${escapeHtml(e.display_name)}</div>
+                <div class="font-medium">${e.share_slug
+                  ? `<a href="/user/${escapeHtml(e.share_slug)}" class="hover:text-purple-400 transition">${escapeHtml(e.display_name)}</a>`
+                  : escapeHtml(e.display_name)}</div>
                 <div class="text-xs" style="color:${title.color}">${title.label}</div>
               </div>
             </div>
