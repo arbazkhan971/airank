@@ -93,6 +93,38 @@ export async function generateCardSvg(data: CardData, mode: 'simple' | 'full'): 
               children: rankInfo.label,
             },
           },
+          ...(data.avatarUrl
+            ? [{
+                type: 'img',
+                props: {
+                  src: data.avatarUrl,
+                  width: 72,
+                  height: 72,
+                  style: {
+                    borderRadius: '50%',
+                    border: `3px solid ${rankInfo.color}`,
+                  },
+                },
+              }]
+            : [{
+                type: 'div',
+                props: {
+                  style: {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 72,
+                    height: 72,
+                    borderRadius: '50%',
+                    background: '#7c3aed',
+                    border: `3px solid ${rankInfo.color}`,
+                    fontSize: 32,
+                    fontWeight: 700,
+                    color: 'white',
+                  },
+                  children: data.displayName.charAt(0),
+                },
+              }]),
           {
             type: 'div',
             props: {

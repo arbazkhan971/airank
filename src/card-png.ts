@@ -43,6 +43,9 @@ export function generateCardHtml(data: CardData, mode: 'simple' | 'full'): strin
 
     <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px;">
       <div style="display: flex; font-size: 48px; font-weight: 700; color: ${rankInfo.color};">${rankInfo.label}</div>
+      ${data.avatarUrl
+        ? `<img src="${data.avatarUrl}" width="72" height="72" style="border-radius: 50%; border: 3px solid ${rankInfo.color};" />`
+        : `<div style="display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 50%; background: #7c3aed; border: 3px solid ${rankInfo.color}; font-size: 32px; font-weight: 700; color: white;">${data.displayName.charAt(0)}</div>`}
       <div style="display: flex; flex-direction: column;">
         <div style="display: flex; font-size: 36px; font-weight: 700; color: #f3f4f6;">${displayName}</div>
         <div style="display: flex; font-size: 20px; color: ${title.color}; font-weight: 600;">${title.label}</div>
