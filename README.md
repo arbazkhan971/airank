@@ -19,8 +19,8 @@ Deploy to Cloudflare Workers in under 10 minutes. Free tier. Zero cost.
 
 <br />
 
-<a href="https://ccrank.dev/leaderboard">
-  <img src="https://ccrank.dev/card/makash/image.svg" alt="Claude Leaderboard Screenshot" width="600" />
+<a href="https://ccrank.dev/leaderboard?sort=output_per_dollar">
+  <img src="docs/images/leaderboard-top10.png" alt="Claude Leaderboard Top 10" width="600" />
 </a>
 
 <br />
@@ -135,6 +135,24 @@ npx ccusage@latest daily --json > report.json
 ### Upload it
 
 Sign in at your leaderboard URL, go to **Upload**, and drop in the JSON. Re-uploading is safe -- existing dates update, new dates get added.
+
+### Git metadata (optional)
+
+Add git activity to your profile with a local upload:
+
+```bash
+npm run git:upload -- --url https://your-worker.workers.dev --token YOUR_TOKEN
+```
+
+Or run both git + ccusage in one go:
+
+```bash
+npm run git:upload -- --url https://your-worker.workers.dev --token YOUR_TOKEN --all
+```
+
+Go CLI supports multi-repo scanning and machine names. See `docs/git-metadata.md`.
+
+Generate your token in **Settings → Git Metadata**. Full details in `docs/git-metadata.md` (includes Go CLI downloads).
 
 ### Invite your team
 
