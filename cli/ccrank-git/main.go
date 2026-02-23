@@ -220,7 +220,7 @@ func uploadPayload(baseURL, token string, payload Payload) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{Timeout: 90 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
 		return err
@@ -282,7 +282,7 @@ func uploadCcusage(baseURL, token, report, machine string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	client := &http.Client{Timeout: 20 * time.Second}
+	client := &http.Client{Timeout: 90 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
 		return err
