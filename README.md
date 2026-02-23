@@ -150,7 +150,8 @@ Or run both git + ccusage in one go:
 npm run git:upload -- --url https://your-worker.workers.dev --token YOUR_TOKEN --all
 ```
 
-Go CLI supports multi-repo scanning and machine names. See `docs/git-metadata.md`.
+Go CLI auto-creates `~/.ccrank/repos.json` and uses it for uploads. Add a repo by running `ccrank-git --add-repo` inside a project folder.
+ccusage runs automatically in the Go CLI. See `docs/git-metadata.md`.
 
 Generate your token in **Settings → Git Metadata**. Full details in `docs/git-metadata.md` (includes Go CLI downloads).
 

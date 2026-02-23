@@ -1,438 +1,656 @@
 package main
 
 import (
-  "bytes"
-  "encoding/json"
-  "errors"
-  "flag"
-  "fmt"
-  "io"
-  "net/http"
-  "os"
-  "os/exec"
-  "path/filepath"
-  "regexp"
-  "strings"
-  "time"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type Day struct {
-  Date        string `json:"date"`
-  CommitCount int    `json:"commitCount"`
+	Date        string `json:"date"`
+	CommitCount int    `json:"commitCount"`
 }
 
 type Project struct {
-  RepoName            string `json:"repoName"`
-  RepoSlug            string `json:"repoSlug"`
-  Description         string `json:"description"`
-  DescriptionOverride bool   `json:"descriptionOverride"`
-  Days                []Day  `json:"days"`
+	RepoName            string `json:"repoName"`
+	RepoSlug            string `json:"repoSlug"`
+	Description         string `json:"description"`
+	DescriptionOverride bool   `json:"descriptionOverride"`
+	Days                []Day  `json:"days"`
 }
 
 type Payload struct {
-  Machine  string    `json:"machine,omitempty"`
-  Projects []Project `json:"projects"`
+	Machine  string    `json:"machine,omitempty"`
+	Projects []Project `json:"projects"`
+}
+
+type Config struct {
+	Repos []string `json:"repos"`
 }
 
 func main() {
-  urlFlag := flag.String("url", "", "Base URL of the leaderboard (e.g., https://ccrank.dev)")
-  tokenFlag := flag.String("token", "", "API token from Settings → Git Metadata")
-  descFlag := flag.String("description", "", "Optional description override")
-  allRepos := flag.Bool("all-repos", false, "Upload git metadata for all Claude projects")
-  repoFlag := flag.String("repo", "", "Upload git metadata for a single repo path")
-  machineFlag := flag.String("machine", "", "Machine name (defaults to hostname)")
-  allFlag := flag.Bool("all", false, "Also run ccusage and upload usage report")
-  jsonSummary := flag.Bool("json", false, "Print summary as JSON")
-  dryRun := flag.Bool("dry-run", false, "Print payload JSON without uploading")
-  flag.Parse()
+	urlFlag := flag.String("url", "", "Base URL of the leaderboard (e.g., https://ccrank.dev)")
+	tokenFlag := flag.String("token", "", "API token from Settings → Git Metadata")
+	descFlag := flag.String("description", "", "Optional description override")
+	allRepos := flag.Bool("all-repos", false, "Deprecated: use config auto-discovery")
+	repoFlag := flag.String("repo", "", "Upload git metadata for a single repo path")
+	machineFlag := flag.String("machine", "", "Machine name (defaults to hostname)")
+	allFlag := flag.Bool("all", false, "Deprecated: ccusage runs automatically")
+	jsonSummary := flag.Bool("json", false, "Print summary as JSON")
+	dryRun := flag.Bool("dry-run", false, "Print payload JSON without uploading")
+	addThisRepo := flag.Bool("add-repo", false, "Add current repo (or scan directory) to ~/.ccrank/repos.json and exit")
+	flag.Parse()
 
-  machine := strings.TrimSpace(*machineFlag)
-  if machine == "" {
-    if host, err := os.Hostname(); err == nil {
-      machine = host
-    }
-  }
+	if *allFlag || *allRepos {
+		fmt.Fprintln(os.Stderr, "Note: --all and --all-repos are deprecated. Config is used automatically.")
+	}
 
-  var repos []string
-  if strings.TrimSpace(*repoFlag) != "" {
-    repos = []string{strings.TrimSpace(*repoFlag)}
-  } else if *allRepos {
-    repos = discoverRepos()
-  } else {
-    repos = []string{mustWd()}
-  }
+	machine := strings.TrimSpace(*machineFlag)
+	if machine == "" {
+		if host, err := os.Hostname(); err == nil {
+			machine = host
+		}
+	}
 
-  payload, summary, err := buildPayload(repos, *descFlag, machine)
-  if err != nil {
-    fmt.Fprintln(os.Stderr, err.Error())
-    os.Exit(1)
-  }
+	if *addThisRepo {
+		if err := addRepoFromWd(); err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		return
+	}
 
-  if *dryRun || *urlFlag == "" || *tokenFlag == "" {
-    out, _ := json.MarshalIndent(payload, "", "  ")
-    fmt.Println(string(out))
-    if !*dryRun {
-      fmt.Fprintln(os.Stderr, "Missing --url or --token. Use --dry-run to inspect payload.")
-    }
-    return
-  }
+	var repos []string
+	if strings.TrimSpace(*repoFlag) != "" {
+		repos = []string{normalizePath(strings.TrimSpace(*repoFlag))}
+	} else {
+		cfg, created, err := loadOrCreateConfig()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		if created || len(cfg.Repos) == 0 {
+			printOnboardingMessage()
+			os.Exit(0)
+		}
+		repos = cfg.Repos
+	}
 
-  err = uploadPayload(*urlFlag, *tokenFlag, payload)
-  if err != nil {
-    fmt.Fprintln(os.Stderr, "Upload failed:", err.Error())
-    os.Exit(1)
-  }
+	payload, summary, err := buildPayload(repos, *descFlag, machine)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 
-  fmt.Println("Upload complete")
+	if *dryRun || *urlFlag == "" || *tokenFlag == "" {
+		out, _ := json.MarshalIndent(payload, "", "  ")
+		fmt.Println(string(out))
+		if !*dryRun {
+			fmt.Fprintln(os.Stderr, "Missing --url or --token. Use --dry-run to inspect payload.")
+		}
+		return
+	}
 
-  if *allFlag {
-    report, err := runCcusage()
-    if err != nil {
-      fmt.Fprintln(os.Stderr, "ccusage failed:", err.Error())
-      os.Exit(1)
-    }
-    err = uploadCcusage(*urlFlag, *tokenFlag, report, machine)
-    if err != nil {
-      fmt.Fprintln(os.Stderr, "ccusage upload failed:", err.Error())
-      os.Exit(1)
-    }
-    fmt.Println("ccusage upload complete")
-  }
+	err = uploadPayload(*urlFlag, *tokenFlag, payload)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Upload failed:", err.Error())
+		os.Exit(1)
+	}
 
-  printSummary(summary, *jsonSummary)
+	fmt.Println("Upload complete")
+
+	report, err := runCcusage()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ccusage failed:", err.Error())
+		printCcusageHelp()
+		printSummary(summary, *jsonSummary)
+		return
+	}
+	err = uploadCcusage(*urlFlag, *tokenFlag, report, machine)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ccusage upload failed:", err.Error())
+		os.Exit(1)
+	}
+	fmt.Println("ccusage upload complete")
+
+	printSummary(summary, *jsonSummary)
 }
 
 func mustWd() string {
-  wd, err := os.Getwd()
-  if err != nil {
-    fmt.Fprintln(os.Stderr, "Unable to determine working directory")
-    os.Exit(1)
-  }
-  return wd
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Unable to determine working directory")
+		os.Exit(1)
+	}
+	return wd
 }
 
 func getCommitCounts(repoPath string) ([]Day, error) {
-  cmd := exec.Command("git", "-C", repoPath, "log", "--since=28 days ago", "--pretty=format:%ad", "--date=short")
-  output, err := cmd.Output()
-  if err != nil {
-    return nil, errors.New("failed to run git log (are you in a git repo?)")
-  }
+	cmd := exec.Command("git", "-C", repoPath, "log", "--since=28 days ago", "--pretty=format:%ad", "--date=short")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, errors.New("failed to run git log (are you in a git repo?)")
+	}
 
-  counts := map[string]int{}
-  lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-  for _, line := range lines {
-    if line == "" {
-      continue
-    }
-    counts[line] += 1
-  }
+	counts := map[string]int{}
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		counts[line] += 1
+	}
 
-  dates := lastNDates(28)
-  days := make([]Day, 0, len(dates))
-  for _, date := range dates {
-    days = append(days, Day{Date: date, CommitCount: counts[date]})
-  }
-  return days, nil
+	dates := lastNDates(28)
+	days := make([]Day, 0, len(dates))
+	for _, date := range dates {
+		days = append(days, Day{Date: date, CommitCount: counts[date]})
+	}
+	return days, nil
 }
 
 func lastNDates(n int) []string {
-  dates := make([]string, 0, n)
-  today := time.Now()
-  for i := n - 1; i >= 0; i-- {
-    d := today.AddDate(0, 0, -i)
-    dates = append(dates, d.Format("2006-01-02"))
-  }
-  return dates
+	dates := make([]string, 0, n)
+	today := time.Now()
+	for i := n - 1; i >= 0; i-- {
+		d := today.AddDate(0, 0, -i)
+		dates = append(dates, d.Format("2006-01-02"))
+	}
+	return dates
 }
 
 func readReadmeTitle(repoPath string) string {
-  candidates := []string{"README.md", "readme.md"}
-  for _, name := range candidates {
-    full := filepath.Join(repoPath, name)
-    if _, err := os.Stat(full); err == nil {
-      contents, err := os.ReadFile(full)
-      if err != nil {
-        continue
-      }
-      for _, line := range strings.Split(string(contents), "\n") {
-        if strings.HasPrefix(line, "# ") {
-          return strings.TrimSpace(strings.TrimPrefix(line, "# "))
-        }
-      }
-    }
-  }
-  return ""
+	candidates := []string{"README.md", "readme.md"}
+	for _, name := range candidates {
+		full := filepath.Join(repoPath, name)
+		if _, err := os.Stat(full); err == nil {
+			contents, err := os.ReadFile(full)
+			if err != nil {
+				continue
+			}
+			for _, line := range strings.Split(string(contents), "\n") {
+				if strings.HasPrefix(line, "# ") {
+					return strings.TrimSpace(strings.TrimPrefix(line, "# "))
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func slugify(input string) string {
-  lower := strings.ToLower(input)
-  re := regexp.MustCompile(`[^a-z0-9]+`)
-  slug := re.ReplaceAllString(lower, "-")
-  slug = strings.Trim(slug, "-")
-  if len(slug) > 50 {
-    slug = slug[:50]
-  }
-  if slug == "" {
-    return "repo"
-  }
-  return slug
+	lower := strings.ToLower(input)
+	re := regexp.MustCompile(`[^a-z0-9]+`)
+	slug := re.ReplaceAllString(lower, "-")
+	slug = strings.Trim(slug, "-")
+	if len(slug) > 50 {
+		slug = slug[:50]
+	}
+	if slug == "" {
+		return "repo"
+	}
+	return slug
 }
 
 func uploadPayload(baseURL, token string, payload Payload) error {
-  baseURL = strings.TrimRight(baseURL, "/")
-  endpoint := baseURL + "/api/git/upload"
+	baseURL = strings.TrimRight(baseURL, "/")
+	endpoint := baseURL + "/api/git/upload"
 
-  body, err := json.Marshal(payload)
-  if err != nil {
-    return err
-  }
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
 
-  req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
-  if err != nil {
-    return err
-  }
-  req.Header.Set("Content-Type", "application/json")
-  req.Header.Set("Authorization", "Bearer "+token)
+	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
-  client := &http.Client{Timeout: 15 * time.Second}
-  res, err := client.Do(req)
-  if err != nil {
-    return err
-  }
-  defer res.Body.Close()
+	client := &http.Client{Timeout: 15 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 
-  respBody, _ := io.ReadAll(res.Body)
-  if res.StatusCode < 200 || res.StatusCode >= 300 {
-    return fmt.Errorf("%s", strings.TrimSpace(string(respBody)))
-  }
+	respBody, _ := io.ReadAll(res.Body)
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return fmt.Errorf("%s", strings.TrimSpace(string(respBody)))
+	}
 
-  var parsed map[string]any
-  if err := json.Unmarshal(respBody, &parsed); err == nil {
-    if ok, found := parsed["ok"].(bool); found && !ok {
-      return fmt.Errorf("%s", strings.TrimSpace(string(respBody)))
-    }
-  }
+	var parsed map[string]any
+	if err := json.Unmarshal(respBody, &parsed); err == nil {
+		if ok, found := parsed["ok"].(bool); found && !ok {
+			return fmt.Errorf("%s", strings.TrimSpace(string(respBody)))
+		}
+	}
 
-  return nil
+	return nil
 }
 
 func runCcusage() (string, error) {
-  cmd := exec.Command("npx", "ccusage@latest", "daily", "--json")
-  out, err := cmd.Output()
-  if err != nil {
-    return "", errors.New("failed to run `npx ccusage@latest daily --json` (is Node installed?)")
-  }
-  return string(out), nil
+	cmd := exec.Command("npx", "ccusage@latest", "daily", "--json")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", errors.New("failed to run `npx ccusage@latest daily --json` (is Node installed?)")
+	}
+	return string(out), nil
+}
+
+func printCcusageHelp() {
+	fmt.Fprintln(os.Stderr, "To enable ccusage uploads:")
+	fmt.Fprintln(os.Stderr, "  1) Install mise: https://mise.jdx.dev")
+	fmt.Fprintln(os.Stderr, "  2) From a repo folder, run:")
+	fmt.Fprintln(os.Stderr, "     npx ccusage@latest daily --json")
 }
 
 func uploadCcusage(baseURL, token, report, machine string) error {
-  baseURL = strings.TrimRight(baseURL, "/")
-  endpoint := baseURL + "/api/upload"
+	baseURL = strings.TrimRight(baseURL, "/")
+	endpoint := baseURL + "/api/upload"
 
-  source := strings.TrimSpace(machine)
-  if source == "" {
-    source = "default"
-  }
-  payload := map[string]any{
-    "json":   report,
-    "source": source,
-  }
-  body, err := json.Marshal(payload)
-  if err != nil {
-    return err
-  }
+	source := strings.TrimSpace(machine)
+	if source == "" {
+		source = "default"
+	}
+	payload := map[string]any{
+		"json":   report,
+		"source": source,
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
 
-  req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
-  if err != nil {
-    return err
-  }
-  req.Header.Set("Content-Type", "application/json")
-  req.Header.Set("Authorization", "Bearer "+token)
+	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
-  client := &http.Client{Timeout: 20 * time.Second}
-  res, err := client.Do(req)
-  if err != nil {
-    return err
-  }
-  defer res.Body.Close()
+	client := &http.Client{Timeout: 20 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 
-  respBody, _ := io.ReadAll(res.Body)
-  if res.StatusCode < 200 || res.StatusCode >= 300 {
-    return fmt.Errorf("%s", strings.TrimSpace(string(respBody)))
-  }
+	respBody, _ := io.ReadAll(res.Body)
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return fmt.Errorf("%s", strings.TrimSpace(string(respBody)))
+	}
 
-  return nil
+	return nil
 }
 
 type Summary struct {
-  Scanned   int      `json:"scanned"`
-  GitRepos  int      `json:"git_repos"`
-  Uploaded  int      `json:"uploaded"`
-  Skipped   int      `json:"skipped"`
-  Errors    []string `json:"errors"`
-  Duplicates int     `json:"duplicates"`
+	Scanned    int      `json:"scanned"`
+	GitRepos   int      `json:"git_repos"`
+	Uploaded   int      `json:"uploaded"`
+	Skipped    int      `json:"skipped"`
+	Errors     []string `json:"errors"`
+	Duplicates int      `json:"duplicates"`
 }
 
 func buildPayload(repoPaths []string, descriptionOverride string, machine string) (Payload, Summary, error) {
-  summary := Summary{Errors: []string{}}
-  seen := map[string]bool{}
-  projects := []Project{}
+	summary := Summary{Errors: []string{}}
+	seen := map[string]bool{}
+	projects := []Project{}
 
-  for _, repoPath := range repoPaths {
-    summary.Scanned += 1
-    repoPath = strings.TrimSpace(repoPath)
-    if repoPath == "" {
-      summary.Skipped += 1
-      continue
-    }
+	for _, repoPath := range repoPaths {
+		summary.Scanned += 1
+		repoPath = strings.TrimSpace(repoPath)
+		if repoPath == "" {
+			summary.Skipped += 1
+			continue
+		}
 
-    if !isGitRepo(repoPath) {
-      summary.Skipped += 1
-      continue
-    }
+		if !isGitRepo(repoPath) {
+			summary.Skipped += 1
+			continue
+		}
 
-    identity := repoPath
-    if remote := gitRemoteURL(repoPath); remote != "" {
-      identity = remote
-    }
-    if seen[identity] {
-      summary.Duplicates += 1
-      continue
-    }
-    seen[identity] = true
+		identity := repoPath
+		if remote := gitRemoteURL(repoPath); remote != "" {
+			identity = remote
+		}
+		if seen[identity] {
+			summary.Duplicates += 1
+			continue
+		}
+		seen[identity] = true
 
-    repoName := filepath.Base(repoPath)
-    repoSlug := slugify(repoName)
-    description := strings.TrimSpace(descriptionOverride)
-    if description == "" {
-      description = readReadmeTitle(repoPath)
-    }
-    if description == "" {
-      description = repoName
-    }
+		repoName := filepath.Base(repoPath)
+		repoSlug := slugify(repoName)
+		description := strings.TrimSpace(descriptionOverride)
+		if description == "" {
+			description = readReadmeTitle(repoPath)
+		}
+		if description == "" {
+			description = repoName
+		}
 
-    days, err := getCommitCounts(repoPath)
-    if err != nil {
-      summary.Errors = append(summary.Errors, fmt.Sprintf("%s: %s", repoPath, err.Error()))
-      summary.Skipped += 1
-      continue
-    }
+		days, err := getCommitCounts(repoPath)
+		if err != nil {
+			summary.Errors = append(summary.Errors, fmt.Sprintf("%s: %s", repoPath, err.Error()))
+			summary.Skipped += 1
+			continue
+		}
 
-    projects = append(projects, Project{
-      RepoName:            repoName,
-      RepoSlug:            repoSlug,
-      Description:         description,
-      DescriptionOverride: descriptionOverride != "",
-      Days:                days,
-    })
-    summary.GitRepos += 1
-  }
+		projects = append(projects, Project{
+			RepoName:            repoName,
+			RepoSlug:            repoSlug,
+			Description:         description,
+			DescriptionOverride: descriptionOverride != "",
+			Days:                days,
+		})
+		summary.GitRepos += 1
+	}
 
-  payload := Payload{
-    Machine:  strings.TrimSpace(machine),
-    Projects: projects,
-  }
+	payload := Payload{
+		Machine:  strings.TrimSpace(machine),
+		Projects: projects,
+	}
 
-  summary.Uploaded = len(projects)
-  if len(projects) == 0 {
-    return payload, summary, errors.New("no valid git repos found to upload")
-  }
-  return payload, summary, nil
+	summary.Uploaded = len(projects)
+	if len(projects) == 0 {
+		return payload, summary, errors.New("no valid git repos found to upload")
+	}
+	return payload, summary, nil
 }
 
 func printSummary(summary Summary, asJSON bool) {
-  if asJSON {
-    out, _ := json.MarshalIndent(summary, "", "  ")
-    fmt.Println(string(out))
-    return
-  }
+	if asJSON {
+		out, _ := json.MarshalIndent(summary, "", "  ")
+		fmt.Println(string(out))
+		return
+	}
 
-  fmt.Printf("Summary: scanned=%d git_repos=%d uploaded=%d skipped=%d duplicates=%d\n",
-    summary.Scanned, summary.GitRepos, summary.Uploaded, summary.Skipped, summary.Duplicates)
-  if len(summary.Errors) > 0 {
-    fmt.Println("Errors:")
-    for _, err := range summary.Errors {
-      fmt.Printf("- %s\n", err)
-    }
-  }
+	fmt.Printf("Summary: scanned=%d git_repos=%d uploaded=%d skipped=%d duplicates=%d\n",
+		summary.Scanned, summary.GitRepos, summary.Uploaded, summary.Skipped, summary.Duplicates)
+	if len(summary.Errors) > 0 {
+		fmt.Println("Errors:")
+		for _, err := range summary.Errors {
+			fmt.Printf("- %s\n", err)
+		}
+	}
 }
 
-func discoverRepos() []string {
-  roots := []string{}
-  if home, err := os.UserHomeDir(); err == nil {
-    roots = append(roots, filepath.Join(home, ".config", "claude", "projects"))
-    roots = append(roots, filepath.Join(home, ".claude", "projects"))
-  }
+func loadOrCreateConfig() (Config, bool, error) {
+	cfgPath, err := ccrankConfigPath()
+	if err != nil {
+		return Config{}, false, err
+	}
 
-  env := os.Getenv("CLAUDE_CONFIG_DIR")
-  if env != "" {
-    parts := strings.Split(env, ",")
-    for _, part := range parts {
-      p := strings.TrimSpace(part)
-      if p == "" {
-        continue
-      }
-      if strings.HasSuffix(p, "projects") {
-        roots = append(roots, p)
-      } else {
-        roots = append(roots, filepath.Join(p, "projects"))
-      }
-    }
-  }
+	data, err := os.ReadFile(cfgPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			cfg := Config{Repos: []string{}}
+			if err := writeConfig(cfgPath, cfg); err != nil {
+				return Config{}, false, err
+			}
+			return cfg, true, nil
+		}
+		return Config{}, false, err
+	}
 
-  seen := map[string]bool{}
-  repos := []string{}
-  for _, root := range roots {
-    if root == "" || seen[root] {
-      continue
-    }
-    seen[root] = true
-    entries, err := os.ReadDir(root)
-    if err != nil {
-      continue
-    }
-    for _, entry := range entries {
-      if entry.IsDir() || (entry.Type()&os.ModeSymlink) != 0 {
-        repos = append(repos, filepath.Join(root, entry.Name()))
-      }
-    }
-  }
-  return repos
+	var cfg Config
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return Config{}, false, errors.New("Invalid ~/.ccrank/repos.json. Please back it up and delete it so it can be recreated.")
+	}
+
+	cfg.Repos = normalizeRepos(cfg.Repos)
+	return cfg, false, nil
+}
+
+func addRepoFromWd() error {
+	cfg, _, err := loadOrCreateConfig()
+	if err != nil {
+		return err
+	}
+	wd := mustWd()
+
+	if repoRoot, ok := gitRepoRoot(wd); ok {
+		cfg.Repos = mergeRepos(cfg.Repos, []string{repoRoot})
+		if err := writeConfigAtHome(cfg); err != nil {
+			return err
+		}
+		fmt.Println("Added repo root to ~/.ccrank/repos.json")
+		return nil
+	}
+
+	repos := scanForRepos(wd)
+	if len(repos) == 0 {
+		return errors.New("no git repos found in this folder")
+	}
+	if len(repos) > 30 {
+		fmt.Fprintln(os.Stderr, "Note: ccrank currently supports up to 30 repos. Adding the 30 most recently active repos.")
+		repos = repos[:30]
+	}
+	cfg.Repos = mergeRepos(cfg.Repos, repos)
+	if err := writeConfigAtHome(cfg); err != nil {
+		return err
+	}
+	fmt.Println("Added repos to ~/.ccrank/repos.json")
+	return nil
+}
+
+func mergeRepos(existing []string, incoming []string) []string {
+	seen := map[string]bool{}
+	merged := []string{}
+	for _, repo := range append(existing, incoming...) {
+		repo = normalizePath(repo)
+		if repo == "" || seen[repo] {
+			continue
+		}
+		seen[repo] = true
+		merged = append(merged, repo)
+	}
+	return merged
+}
+
+func writeConfigAtHome(cfg Config) error {
+	cfgPath, err := ccrankConfigPath()
+	if err != nil {
+		return err
+	}
+	return writeConfig(cfgPath, cfg)
+}
+
+func writeConfig(path string, cfg Config) error {
+	cfg.Repos = normalizeRepos(cfg.Repos)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	out, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+	out = append(out, '\n')
+	return os.WriteFile(path, out, 0o644)
+}
+
+func ccrankConfigPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".ccrank", "repos.json"), nil
+}
+
+func expandHome(path string) string {
+	if path == "" {
+		return path
+	}
+	if strings.HasPrefix(path, "~"+string(os.PathSeparator)) || path == "~" {
+		if home, err := os.UserHomeDir(); err == nil {
+			if path == "~" {
+				return home
+			}
+			return filepath.Join(home, strings.TrimPrefix(path, "~"+string(os.PathSeparator)))
+		}
+	}
+	return path
+}
+
+func normalizeRepos(repos []string) []string {
+	out := []string{}
+	for _, repo := range repos {
+		repo = strings.TrimSpace(repo)
+		if repo == "" {
+			continue
+		}
+		out = append(out, normalizePath(repo))
+	}
+	return out
+}
+
+func normalizePath(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return ""
+	}
+	path = expandHome(path)
+	if abs, err := filepath.Abs(path); err == nil {
+		path = abs
+	}
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = resolved
+	}
+	return filepath.Clean(path)
+}
+
+func gitRepoRoot(path string) (string, bool) {
+	cmd := exec.Command("git", "-C", path, "rev-parse", "--show-toplevel")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", false
+	}
+	root := strings.TrimSpace(string(out))
+	if root == "" {
+		return "", false
+	}
+	return normalizePath(root), true
+}
+
+func scanForRepos(root string) []string {
+	candidates := findGitRepos(root)
+	type rankedRepo struct {
+		path  string
+		score int64
+	}
+	ranked := []rankedRepo{}
+	for _, repo := range candidates {
+		if score, ok := lastCommitUnix(repo); ok {
+			ranked = append(ranked, rankedRepo{path: normalizePath(repo), score: score})
+		}
+	}
+	sort.Slice(ranked, func(i, j int) bool {
+		return ranked[i].score > ranked[j].score
+	})
+	out := []string{}
+	for _, entry := range ranked {
+		out = append(out, entry.path)
+	}
+	return out
+}
+
+func lastCommitUnix(repoPath string) (int64, bool) {
+	cmd := exec.Command("git", "-C", repoPath, "log", "-1", "--format=%ct")
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, false
+	}
+	raw := strings.TrimSpace(string(out))
+	if raw == "" {
+		return 0, false
+	}
+	parsed, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return parsed, true
+}
+
+func findGitRepos(root string) []string {
+	repos := []string{}
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() && d.Name() == ".git" {
+			cfg := filepath.Join(path, "config")
+			if info, err := os.Stat(cfg); err == nil && !info.IsDir() {
+				repoRoot := filepath.Dir(path)
+				repos = append(repos, repoRoot)
+			}
+			return filepath.SkipDir
+		}
+		return nil
+	})
+	return repos
 }
 
 func isGitRepo(repoPath string) bool {
-  cmd := exec.Command("git", "-C", repoPath, "rev-parse", "--is-inside-work-tree")
-  out, err := cmd.Output()
-  if err != nil {
-    return false
-  }
-  return strings.TrimSpace(string(out)) == "true"
+	cmd := exec.Command("git", "-C", repoPath, "rev-parse", "--is-inside-work-tree")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(out)) == "true"
 }
 
 func gitRemoteURL(repoPath string) string {
-  cmd := exec.Command("git", "-C", repoPath, "config", "--get", "remote.origin.url")
-  out, err := cmd.Output()
-  if err == nil {
-    url := strings.TrimSpace(string(out))
-    if url != "" {
-      return url
-    }
-  }
+	cmd := exec.Command("git", "-C", repoPath, "config", "--get", "remote.origin.url")
+	out, err := cmd.Output()
+	if err == nil {
+		url := strings.TrimSpace(string(out))
+		if url != "" {
+			return url
+		}
+	}
 
-  remotesCmd := exec.Command("git", "-C", repoPath, "remote")
-  remotesOut, err := remotesCmd.Output()
-  if err != nil {
-    return ""
-  }
-  remotes := strings.Split(strings.TrimSpace(string(remotesOut)), "\n")
-  if len(remotes) == 0 || remotes[0] == "" {
-    return ""
-  }
-  name := remotes[0]
-  cmd = exec.Command("git", "-C", repoPath, "config", "--get", "remote."+name+".url")
-  out, err = cmd.Output()
-  if err != nil {
-    return ""
-  }
-  return strings.TrimSpace(string(out))
+	remotesCmd := exec.Command("git", "-C", repoPath, "remote")
+	remotesOut, err := remotesCmd.Output()
+	if err != nil {
+		return ""
+	}
+	remotes := strings.Split(strings.TrimSpace(string(remotesOut)), "\n")
+	if len(remotes) == 0 || remotes[0] == "" {
+		return ""
+	}
+	name := remotes[0]
+	cmd = exec.Command("git", "-C", repoPath, "config", "--get", "remote."+name+".url")
+	out, err = cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func printOnboardingMessage() {
+	fmt.Println("Welcome to ccrank git uploads.")
+	fmt.Println("We created ~/.ccrank/repos.json to store the repos you want to upload.")
+	fmt.Println("")
+	fmt.Println("To add a single repo, run this inside a project folder:")
+	fmt.Println("  ccrank-git --add-repo")
+	fmt.Println("")
+	fmt.Println("To add many repos at once, run this in a folder like ~/code:")
+	fmt.Println("  ccrank-git --add-repo")
+	fmt.Println("It will scan recursively and add the 30 most recently active repos.")
+	fmt.Println("Note: ccrank currently supports up to 30 repos.")
 }

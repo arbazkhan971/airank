@@ -19,16 +19,16 @@ From any git repo you want to track:
 npm run git:upload -- --url https://your-worker.workers.dev --token YOUR_TOKEN
 ```
 
-Run with ccusage upload too:
-
-```bash
-npm run git:upload -- --url https://your-worker.workers.dev --token YOUR_TOKEN --all
-```
-
 Add machine name:
 
 ```bash
 npm run git:upload -- --url https://your-worker.workers.dev --token YOUR_TOKEN --all --machine laptop
+```
+
+Run with ccusage upload too (Node script only):
+
+```bash
+npm run git:upload -- --url https://your-worker.workers.dev --token YOUR_TOKEN --all
 ```
 
 ### Go CLI (binary)
@@ -45,24 +45,27 @@ Run:
 ./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN
 ```
 
-Run with ccusage upload too:
+ccusage upload runs automatically (requires Node.js). If Node is missing, install `mise` and run:
 
 ```bash
-./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN --all
+npx ccusage@latest daily --json
 ```
 
-Note: `--all` requires Node.js (it runs `npx ccusage@latest`).
+Config-based repo discovery:
 
-All repos mode (mirrors ccusage directory detection):
+When the CLI runs and `~/.ccrank/repos.json` is missing, it creates the file and prints onboarding instructions (no upload happens until you add repos).
 
 ```bash
-./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN --all-repos
+./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN
 ```
 
-This scans:
-- `~/.config/claude/projects/`
-- `~/.claude/projects/`
-- plus any directories in `CLAUDE_CONFIG_DIR` (comma-separated)
+Populate `~/.ccrank/repos.json` by adding repos from within each project:
+
+```bash
+./ccrank-git_darwin_arm64 --add-repo
+```
+
+If you run `--add-repo` outside a repo (e.g., a folder like `~/code`), the tool will scan recursively and add the 30 most recently active repos.
 
 Single repo path:
 
@@ -70,16 +73,16 @@ Single repo path:
 ./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN --repo /path/to/repo
 ```
 
-Machine name (defaults to hostname):
+Machine name (defaults to hostname; can be changed on later uploads):
 
 ```bash
-./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN --all-repos --machine laptop
+./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN --machine laptop
 ```
 
 JSON summary output:
 
 ```bash
-./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN --all-repos --json
+./ccrank-git_darwin_arm64 --url https://your-worker.workers.dev --token YOUR_TOKEN --json
 ```
 
 Build from source (optional):
