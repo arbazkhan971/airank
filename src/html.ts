@@ -29,12 +29,17 @@ function layout(title: string, content: string, user: User | null = null, ogOver
           <!-- Desktop nav -->
           <div class="hidden md:flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
-            <a href="/history" class="text-sm text-gray-300 hover:text-white transition">History</a>
-            <a href="/about" class="text-sm text-gray-300 hover:text-white transition">About</a>
-            <a href="/upload" class="text-sm text-gray-300 hover:text-white transition">Upload</a>
-            <a href="/invites" class="text-sm text-gray-300 hover:text-white transition">Invites</a>
-            <a href="/settings" class="text-sm text-gray-300 hover:text-white transition">Settings</a>
-            ${user.is_admin ? '<a href="/admin" class="text-sm text-yellow-400 hover:text-yellow-300 transition">Admin</a>' : ''}
+            <a href="/upload" class="text-sm text-purple-300 hover:text-white transition font-medium">Install</a>
+            <details class="relative group">
+              <summary class="text-sm text-gray-300 hover:text-white transition cursor-pointer list-none">More</summary>
+              <div class="absolute right-0 mt-2 w-44 bg-gray-900 border border-gray-800 rounded-lg shadow-lg p-2">
+                <a href="/history" class="block px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition">History</a>
+                <a href="/about" class="block px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition">About</a>
+                <a href="/invites" class="block px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition">Invites</a>
+                <a href="/settings" class="block px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition">Settings</a>
+                ${user.is_admin ? '<a href="/admin" class="block px-3 py-2 text-sm text-yellow-400 hover:text-yellow-300 hover:bg-gray-800 rounded-md transition">Admin</a>' : ''}
+              </div>
+            </details>
             <div class="flex items-center gap-2">
               ${user.avatar_url ? `<img src="${escapeHtml(user.avatar_url)}" class="w-7 h-7 rounded-full" alt="">` : `<div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(user.display_name.charAt(0))}</div>`}
               <span class="text-sm text-gray-300">${escapeHtml(user.display_name)}</span>
@@ -49,12 +54,15 @@ function layout(title: string, content: string, user: User | null = null, ogOver
         <!-- Mobile menu -->
         <div id="mobile-menu" class="hidden md:hidden border-t border-gray-800 px-4 py-3 space-y-2">
           <a href="/leaderboard" class="block text-sm text-gray-300 hover:text-white py-1">Leaderboard</a>
-          <a href="/history" class="block text-sm text-gray-300 hover:text-white py-1">History</a>
-          <a href="/about" class="block text-sm text-gray-300 hover:text-white py-1">About</a>
-          <a href="/upload" class="block text-sm text-gray-300 hover:text-white py-1">Upload</a>
-          <a href="/invites" class="block text-sm text-gray-300 hover:text-white py-1">Invites</a>
-          <a href="/settings" class="block text-sm text-gray-300 hover:text-white py-1">Settings</a>
-          ${user.is_admin ? '<a href="/admin" class="block text-sm text-yellow-400 hover:text-yellow-300 py-1">Admin</a>' : ''}
+          <a href="/upload" class="block text-sm text-purple-300 hover:text-white py-1 font-medium">Install</a>
+          <div class="pt-2 border-t border-gray-800/60">
+            <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">More</div>
+            <a href="/history" class="block text-sm text-gray-300 hover:text-white py-1">History</a>
+            <a href="/about" class="block text-sm text-gray-300 hover:text-white py-1">About</a>
+            <a href="/invites" class="block text-sm text-gray-300 hover:text-white py-1">Invites</a>
+            <a href="/settings" class="block text-sm text-gray-300 hover:text-white py-1">Settings</a>
+            ${user.is_admin ? '<a href="/admin" class="block text-sm text-yellow-400 hover:text-yellow-300 py-1">Admin</a>' : ''}
+          </div>
           <div class="flex items-center gap-2 py-1">
             ${user.avatar_url ? `<img src="${escapeHtml(user.avatar_url)}" class="w-7 h-7 rounded-full" alt="">` : `<div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">${escapeHtml(user.display_name.charAt(0))}</div>`}
             <span class="text-sm text-gray-300">${escapeHtml(user.display_name)}</span>
@@ -70,8 +78,14 @@ function layout(title: string, content: string, user: User | null = null, ogOver
           <!-- Desktop nav -->
           <div class="hidden md:flex items-center gap-6">
             <a href="/leaderboard" class="text-sm text-gray-300 hover:text-white transition">Leaderboard</a>
-            <a href="/history" class="text-sm text-gray-300 hover:text-white transition">History</a>
-            <a href="/about" class="text-sm text-gray-300 hover:text-white transition">About</a>
+            <a href="/upload" class="text-sm text-purple-300 hover:text-white transition font-medium">Install</a>
+            <details class="relative group">
+              <summary class="text-sm text-gray-300 hover:text-white transition cursor-pointer list-none">More</summary>
+              <div class="absolute right-0 mt-2 w-36 bg-gray-900 border border-gray-800 rounded-lg shadow-lg p-2">
+                <a href="/history" class="block px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition">History</a>
+                <a href="/about" class="block px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition">About</a>
+              </div>
+            </details>
             <a href="/login" class="text-sm bg-purple-600 hover:bg-purple-500 text-white px-4 py-1.5 rounded-lg transition">Sign In</a>
           </div>
           <!-- Mobile hamburger -->
@@ -82,8 +96,12 @@ function layout(title: string, content: string, user: User | null = null, ogOver
         <!-- Mobile menu -->
         <div id="mobile-menu-public" class="hidden md:hidden border-t border-gray-800 px-4 py-3 space-y-2">
           <a href="/leaderboard" class="block text-sm text-gray-300 hover:text-white py-1">Leaderboard</a>
-          <a href="/history" class="block text-sm text-gray-300 hover:text-white py-1">History</a>
-          <a href="/about" class="block text-sm text-gray-300 hover:text-white py-1">About</a>
+          <a href="/upload" class="block text-sm text-purple-300 hover:text-white py-1 font-medium">Install</a>
+          <div class="pt-2 border-t border-gray-800/60">
+            <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">More</div>
+            <a href="/history" class="block text-sm text-gray-300 hover:text-white py-1">History</a>
+            <a href="/about" class="block text-sm text-gray-300 hover:text-white py-1">About</a>
+          </div>
           <a href="/login" class="block text-sm bg-purple-600 hover:bg-purple-500 text-white px-4 py-1.5 rounded-lg transition text-center">Sign In</a>
         </div>
       </nav>`;
@@ -95,9 +113,9 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)} | ccrank.dev</title>
   <meta name="author" content="Akash Mahajan">
-  <meta name="description" content="Track and compare your Claude Code usage. Upload ccusage reports and compete on the leaderboard.">
+  <meta name="description" content="Install the ccrank CLI to track your Claude Code usage and see where you rank.">
   <meta property="og:title" content="${escapeHtml(title)} | ccrank.dev">
-  <meta property="og:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'Track and compare your Claude Code usage. Upload ccusage reports and see where you rank.'}">
+  <meta property="og:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'Install the ccrank CLI to track your Claude Code usage and see where you rank.'}">
   <meta property="og:type" content="website">
   <meta property="og:image" content="${ogOverrides?.image || 'https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp'}">
   <meta property="og:image:width" content="1200">
@@ -105,7 +123,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@makash">
   <meta name="twitter:title" content="${escapeHtml(title)} | ccrank.dev">
-  <meta name="twitter:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'Track and compare your Claude Code usage. Upload ccusage reports and see where you rank.'}">
+  <meta name="twitter:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'Install the ccrank CLI to track your Claude Code usage and see where you rank.'}">
   <meta name="twitter:image" content="${ogOverrides?.image || 'https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp'}">
   <meta property="og:site_name" content="ccrank.dev">
   <meta property="og:url" content="https://ccrank.dev/">
@@ -116,7 +134,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "Claude Leaderboard",
-    "description": "Track and compare your Claude Code usage. Upload ccusage reports and compete on the leaderboard.",
+    "description": "Install the ccrank CLI to track your Claude Code usage and see where you rank.",
     "url": "https://ccrank.dev/",
     "applicationCategory": "DeveloperApplication",
     "creator": {
@@ -255,7 +273,7 @@ export function landingPage(topEntries: LeaderboardEntry[]): string {
     podiumSection = `<div class="mb-12 text-center">
       <div class="bg-gray-900 border border-gray-800 rounded-xl p-8 max-w-md mx-auto card-hover">
         <p class="text-gray-400 mb-2">No data yet</p>
-        <p class="text-sm text-gray-500">Be the first to upload a ccusage report!</p>
+        <p class="text-sm text-gray-500">Be the first to install the CLI and upload.</p>
       </div>
     </div>`;
   }
@@ -292,7 +310,7 @@ export function landingPage(topEntries: LeaderboardEntry[]): string {
 
       <div class="flex flex-col sm:flex-row items-center gap-4">
         <a href="/login" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg px-8 py-3.5 transition text-sm shadow-lg shadow-purple-600/20">
-          Sign in &amp; Upload Your Stats
+          Sign in &amp; Install the CLI
         </a>
         <a href="/leaderboard" class="bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg px-8 py-3.5 transition text-sm border border-gray-700">
           View Full Leaderboard &rarr;
@@ -406,7 +424,7 @@ export function dashboardPage(user: User, stats: { total_cost: number; total_tok
 
     <div class="flex gap-4 mb-8">
       <a href="/upload" class="bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg px-6 py-3 transition">
-        Upload Report
+        Install CLI
       </a>
       <a href="/leaderboard" class="bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg px-6 py-3 transition">
         View Leaderboard
@@ -516,7 +534,7 @@ export function leaderboardPage(entries: LeaderboardEntry[], user: User | null =
     ${entries.length === 0
       ? `<div class="text-center py-20 text-gray-500">
           <p class="text-lg mb-2">No data yet</p>
-          <p class="text-sm">Be the first to upload a ccusage report!</p>
+          <p class="text-sm">Be the first to install the CLI and upload.</p>
         </div>`
       : `<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden glow">
         <div class="overflow-x-auto">
@@ -552,148 +570,151 @@ export function leaderboardPage(entries: LeaderboardEntry[], user: User | null =
 }
 
 export function uploadPage(user: User, message: { type: 'success' | 'error'; text: string } | null = null): string {
-  const alertHtml = message
-    ? `<div class="mb-6 p-4 rounded-lg border ${message.type === 'success' ? 'bg-green-900/20 border-green-800 text-green-400' : 'bg-red-900/20 border-red-800 text-red-400'}">
-        ${escapeHtml(message.text)}
+  const binaries = [
+    {
+      key: 'mac',
+      label: 'macOS (Apple Silicon)',
+      file: 'ccrank-git_darwin_arm64',
+      download: 'https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_darwin_arm64',
+      command: 'curl -L -o ccrank-git https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_darwin_arm64 && chmod +x ccrank-git && ./ccrank-git --url https://ccrank.dev --token YOUR_TOKEN',
+    },
+    {
+      key: 'linux',
+      label: 'Linux x64',
+      file: 'ccrank-git_linux_amd64',
+      download: 'https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_linux_amd64',
+      command: 'curl -L -o ccrank-git https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_linux_amd64 && chmod +x ccrank-git && ./ccrank-git --url https://ccrank.dev --token YOUR_TOKEN',
+    },
+    {
+      key: 'windows',
+      label: 'Windows x64',
+      file: 'ccrank-git_windows_amd64.exe',
+      download: 'https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_windows_amd64.exe',
+      command: 'powershell -Command \"iwr -Uri https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_windows_amd64.exe -OutFile ccrank-git.exe; .\\\\ccrank-git.exe --url https://ccrank.dev --token YOUR_TOKEN\"',
+    },
+  ];
+
+  const cardHtml = binaries
+    .map(
+      (bin) => `<div class="bg-gray-900 border border-gray-800 rounded-xl p-5" data-os-card="${bin.key}">
+        <button class="w-full flex items-center justify-between text-left" data-os-toggle="${bin.key}">
+          <div>
+            <div class="text-sm font-semibold text-gray-200">${bin.label}</div>
+            <div class="text-xs text-gray-500">${bin.file}</div>
+          </div>
+          <span class="text-xs text-gray-400" data-os-state="${bin.key}">Show</span>
+        </button>
+        <div class="mt-4 hidden" data-os-panel="${bin.key}">
+          <a href="${bin.download}" class="inline-flex items-center gap-2 text-sm text-purple-300 hover:text-purple-200 transition">
+            Download binary
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+          </a>
+          <div class="mt-3 bg-gray-950 border border-gray-800 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-gray-500">Run</span>
+              <button class="text-xs text-purple-300 hover:text-purple-200 transition" data-copy="${escapeHtml(bin.command)}">Copy</button>
+            </div>
+            <code class="text-xs text-gray-300 break-all">${escapeHtml(bin.command)}</code>
+          </div>
+        </div>
       </div>`
-    : '';
+    )
+    .join('');
 
   return layout(
-    'Upload',
-    `<div class="max-w-2xl mx-auto">
+    'Install',
+    `<div class="max-w-3xl mx-auto">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold mb-1">Upload ccusage Report</h1>
-        <p class="text-gray-400">
-          Paste the JSON output from <code class="bg-gray-800 px-1.5 py-0.5 rounded text-sm">npx ccusage@latest daily --json</code>
-        </p>
+        <h1 class="text-3xl font-bold mb-2">Install the ccrank CLI</h1>
+        <p class="text-gray-400">Your first upload should take about two minutes.</p>
       </div>
 
-      ${alertHtml}
-
-      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 glow">
-        <form id="upload-form" method="POST" action="/api/upload">
-          <div class="mb-4">
-            <label class="block text-sm text-gray-400 mb-2">
-              Upload JSON file
-            </label>
-            <input
-              type="file"
-              id="file-input"
-              accept=".json"
-              class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-600 file:text-white hover:file:bg-purple-500 file:cursor-pointer file:transition"
-            >
-          </div>
-
-          <div class="mb-1 flex items-center gap-3">
-            <div class="h-px bg-gray-800 flex-1"></div>
-            <span class="text-xs text-gray-600">OR</span>
-            <div class="h-px bg-gray-800 flex-1"></div>
-          </div>
-
-          <div class="mb-6">
-            <label class="block text-sm text-gray-400 mb-2">
-              Paste JSON output
-            </label>
-            <textarea
-              id="json-input"
-              name="json"
-              rows="12"
-              placeholder='{"type":"daily","data":[...],"summary":{...}}'
-              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:border-purple-500 transition resize-y"
-            ></textarea>
-          </div>
-
-          <div class="mb-6">
-            <label class="block text-sm text-gray-400 mb-2">
-              Machine name <span class="text-gray-600">(optional)</span>
-            </label>
-            <input
-              type="text"
-              id="source-input"
-              placeholder="e.g. laptop, vpc-1, office"
-              pattern="[a-zA-Z0-9_-]+"
-              maxlength="50"
-              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 transition"
-            >
-            <p class="text-xs text-gray-500 mt-1">Track usage from multiple machines separately. Letters, numbers, hyphens, underscores only.</p>
-          </div>
-
-          <button
-            type="submit"
-            id="submit-btn"
-            class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg px-4 py-3 transition"
-          >
-            Upload &amp; Parse
-          </button>
-        </form>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <h2 class="text-sm font-semibold text-gray-200 mb-2">Step 1 — Get your token</h2>
+        <p class="text-sm text-gray-400 mb-4">Generate a token in Settings. You’ll only see it once.</p>
+        <a href="/settings" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition">
+          Open Settings
+        </a>
       </div>
 
-      <div class="mt-6 bg-gray-900/50 border border-gray-800/50 rounded-xl p-6">
-        <h3 class="text-sm font-medium mb-3 text-gray-300">How to generate your report</h3>
-        <ol class="text-sm text-gray-400 space-y-2">
-          <li><span class="text-purple-400 font-mono">1.</span> Run <code class="bg-gray-800 px-1.5 py-0.5 rounded">npx ccusage@latest daily --json > report.json</code></li>
-          <li><span class="text-purple-400 font-mono">2.</span> Upload the <code class="bg-gray-800 px-1.5 py-0.5 rounded">report.json</code> file above, or paste its contents</li>
-          <li><span class="text-purple-400 font-mono">3.</span> Your data will be parsed and added to the leaderboard</li>
-        </ol>
-        <p class="text-xs text-gray-500 mt-3">Re-uploading updates existing dates rather than duplicating. You can safely re-upload anytime.</p>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <h2 class="text-sm font-semibold text-gray-200 mb-4">Step 2 — Download & run</h2>
+        <div class="space-y-3">
+          ${cardHtml}
+        </div>
       </div>
 
-      <!-- Invite nudge on upload page -->
-      <div class="mt-6 bg-gray-900/50 border border-gray-800/50 rounded-xl p-5 text-center">
-        <p class="text-sm text-gray-300 mb-2">The leaderboard is more fun with friends</p>
-        <a href="/invites" class="text-purple-400 hover:text-purple-300 transition text-sm font-medium">Share your invite codes &rarr;</a>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <h2 class="text-sm font-semibold text-gray-200 mb-2">Step 3 — Add a repo</h2>
+        <p class="text-sm text-gray-400 mb-3">Run this inside your project folder.</p>
+        <div class="bg-gray-950 border border-gray-800 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-500">Command</span>
+            <button class="text-xs text-purple-300 hover:text-purple-200 transition" data-copy="ccrank-git --add-repo">Copy</button>
+          </div>
+          <code class="text-xs text-gray-300">ccrank-git --add-repo</code>
+          <p class="text-xs text-gray-500 mt-2">Windows: <code class="bg-gray-800 px-1 rounded">ccrank-git.exe --add-repo</code></p>
+        </div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <h2 class="text-sm font-semibold text-gray-200 mb-2">Multiple devices?</h2>
+        <p class="text-sm text-gray-400">Add <code class="bg-gray-800 px-1 rounded">--machine laptop</code> so each device stays separate.</p>
+      </div>
+
+      <div class="bg-gray-900/60 border border-gray-800/60 rounded-xl p-6">
+        <h2 class="text-sm font-semibold text-gray-200 mb-2">Troubleshooting</h2>
+        <p class="text-sm text-gray-400">No Node installed? We recommend <a href="https://mise.jdx.dev" target="_blank" rel="noopener" class="text-purple-300 hover:text-purple-200 transition">mise</a>. Then run:</p>
+        <div class="bg-gray-950 border border-gray-800 rounded-lg p-3 mt-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-500">Command</span>
+            <button class="text-xs text-purple-300 hover:text-purple-200 transition" data-copy="npx ccusage@latest daily --json">Copy</button>
+          </div>
+          <code class="text-xs text-gray-300">npx ccusage@latest daily --json</code>
+        </div>
       </div>
     </div>
 
     <script>
-      const fileInput = document.getElementById('file-input');
-      const jsonInput = document.getElementById('json-input');
-      const sourceInput = document.getElementById('source-input');
-      const form = document.getElementById('upload-form');
-      const submitBtn = document.getElementById('submit-btn');
+      (function() {
+        const ua = navigator.userAgent.toLowerCase();
+        let detected = 'mac';
+        if (ua.includes('windows')) detected = 'windows';
+        else if (ua.includes('linux')) detected = 'linux';
 
-      // Remember last-used source
-      const savedSource = localStorage.getItem('ccrank-source');
-      if (savedSource) sourceInput.value = savedSource;
+        const expand = (key) => {
+          document.querySelectorAll('[data-os-panel]').forEach((el) => el.classList.add('hidden'));
+          document.querySelectorAll('[data-os-state]').forEach((el) => (el.textContent = 'Show'));
+          const panel = document.querySelector('[data-os-panel=\"' + key + '\"]');
+          const state = document.querySelector('[data-os-state=\"' + key + '\"]');
+          if (panel) panel.classList.remove('hidden');
+          if (state) state.textContent = 'Hide';
+        };
 
-      fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const text = await file.text();
-          jsonInput.value = text;
-        }
-      });
+        expand(detected);
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const json = jsonInput.value.trim();
-        if (!json) { alert('Please paste JSON or upload a file'); return; }
-        const source = sourceInput.value.trim();
-        if (source) localStorage.setItem('ccrank-source', source);
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Uploading...';
-        try {
-          const payload = { json };
-          if (source) payload.source = source;
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+        document.querySelectorAll('[data-os-toggle]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const key = btn.getAttribute('data-os-toggle');
+            if (key) expand(key);
           });
-          const data = await res.json();
-          if (data.ok) {
-            window.location.href = '/?msg=upload_success&count=' + (data.entries || 0);
-          } else {
-            alert('Error: ' + (data.error || 'Upload failed'));
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Upload & Parse';
-          }
-        } catch (err) {
-          alert('Network error: ' + err.message);
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Upload & Parse';
-        }
-      });
+        });
+
+        document.querySelectorAll('[data-copy]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const text = btn.getAttribute('data-copy');
+            if (!text) return;
+            try {
+              await navigator.clipboard.writeText(text);
+              const original = btn.textContent;
+              btn.textContent = 'Copied';
+              setTimeout(() => { btn.textContent = original; }, 1200);
+            } catch {
+              btn.textContent = 'Copy failed';
+            }
+          });
+        });
+      })();
     </script>`,
     user
   );
@@ -886,7 +907,7 @@ export function aboutPage(user: User | null = null): string {
       <section class="mb-10">
         <h2 class="text-xl font-bold mb-4 text-pink-400">Going Live</h2>
         <p class="text-gray-300 leading-relaxed mb-4">
-          Minutes later, the app was live on Cloudflare Workers. Akash shared the link in the group, and people started uploading their ccusage reports immediately.
+          Minutes later, the app was live on Cloudflare Workers. Akash shared the link in the group, and people started running the CLI immediately.
         </p>
         <img src="${IMG_APP_SHARED}" alt="Sharing the live app in the WhatsApp group" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
         <p class="text-gray-300 leading-relaxed mb-4">
@@ -912,11 +933,11 @@ export function aboutPage(user: User | null = null): string {
         <ol class="text-gray-300 space-y-3">
           <li class="flex items-start gap-3">
             <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
-            <span>Install <a href="https://github.com/ryoppippi/ccusage" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">ccusage</a> and run <code class="bg-gray-800 px-1.5 py-0.5 rounded text-sm">npx ccusage@latest daily --json</code></span>
+            <span>Generate your token in <a href="/settings" class="text-purple-400 hover:text-purple-300 transition">Settings</a></span>
           </li>
           <li class="flex items-start gap-3">
             <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
-            <span>Upload the JSON report on ccrank.dev</span>
+            <span>Download the ccrank CLI and run it from your project folder</span>
           </li>
           <li class="flex items-start gap-3">
             <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">3</span>

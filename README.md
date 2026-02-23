@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 **Track, compare, and compete on [Claude Code](https://claude.ai) usage across your team.**
-Upload [ccusage](https://github.com/ryoppippi/ccusage) reports. See the leaderboard. Earn titles. Talk trash.
+Install the ccrank CLI (powered by [ccusage](https://github.com/ryoppippi/ccusage)). See the leaderboard. Earn titles. Talk trash.
 
 Deploy to Cloudflare Workers in under 10 minutes. Free tier. Zero cost.
 
@@ -126,15 +126,9 @@ Share the URL. Start competing.
 
 ## Usage
 
-### Generate your report
+### Install the CLI
 
-```bash
-npx ccusage@latest daily --json > report.json
-```
-
-### Upload it
-
-Sign in at your leaderboard URL, go to **Upload**, and drop in the JSON. Re-uploading is safe -- existing dates update, new dates get added.
+Sign in at your leaderboard URL, go to **Install**, generate a token in **Settings**, and run the CLI from your project folder. The Install page includes OS-specific one-liners.
 
 ### Git metadata (optional)
 
@@ -172,10 +166,10 @@ Each user gets 3 invite codes. Go to **Invites** to generate and share them. Adm
 | `GET` | `/card/:slug` | No | Public stats card |
 | `GET` | `/card/:slug/image.svg` | No | OG image (SVG) |
 | `GET` | `/settings` | Yes | Sharing settings |
-| `GET` | `/upload` | Yes | Upload form |
+| `GET` | `/upload` | Yes | Install page |
 | `GET` | `/invites` | Yes | Manage invites |
 | `GET` | `/admin` | Admin | Admin panel |
-| `POST` | `/api/upload` | Yes | Upload ccusage JSON |
+| `POST` | `/api/upload` | Yes | Upload ccusage JSON (used by CLI) |
 | `POST` | `/api/settings/sharing` | Yes | Save sharing prefs |
 | `GET` | `/api/leaderboard` | No | Leaderboard JSON |
 | `GET` | `/api/me` | Yes | Current user + stats |
