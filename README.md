@@ -267,6 +267,27 @@ Add `http://localhost:8787/auth/google/callback` as an authorized redirect URI i
 
 ---
 
+## Deploying
+
+Deployments are triggered by **release tags** — pushing code or merging PRs does not deploy automatically.
+
+To deploy a new version:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Or create a release via GitHub:
+
+```bash
+gh release create v1.0.0 --title "v1.0.0" --notes "What changed"
+```
+
+A GitHub Actions workflow picks up the tag, runs `wrangler deploy`, and pushes to Cloudflare Workers.
+
+---
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues and pull requests.
