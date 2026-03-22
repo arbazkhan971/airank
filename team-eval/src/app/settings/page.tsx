@@ -82,6 +82,7 @@ const notificationDefaults = {
 
 const tabs = [
   { key: "profile", label: "Profile", icon: User },
+  { key: "password", label: "Password", icon: Shield },
   { key: "organization", label: "Organization", icon: Building2 },
   { key: "tokens", label: "API Tokens", icon: Key },
   { key: "notifications", label: "Notifications", icon: Bell },
@@ -110,6 +111,13 @@ export default function SettingsPage() {
   const [tokens, setTokens] = useState<ApiToken[]>(initialTokens);
   const [newTokenName, setNewTokenName] = useState("");
   const [createdToken, setCreatedToken] = useState<string | null>(null);
+
+  /* Password state */
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   /* Notifications state */
   const [notifications, setNotifications] = useState(notificationDefaults);
@@ -213,6 +221,106 @@ export default function SettingsPage() {
         >
           <Save className="h-4 w-4" />
           Save Changes
+        </button>
+      </div>
+    );
+  }
+
+  async function handlePasswordChange() {
+    setPasswordError("");
+    if (newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      const res = await fetch("/api/settings/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPasswordError(data.error || "Failed to update password");
+        return;
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      flashSaved();
+    } catch {
+      setPasswordError("Network error. Please try again.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  }
+
+  function renderPassword() {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-100">Change Password</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            Update your password. If you were given a temporary password by your admin, change it here.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              Current Password
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              New Password
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat new password"
+              className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        {passwordError && (
+          <div className="rounded-lg border border-red-800/50 bg-red-900/20 px-4 py-3 text-sm text-red-400">
+            {passwordError}
+          </div>
+        )}
+
+        <button
+          onClick={handlePasswordChange}
+          disabled={passwordSaving}
+          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" />
+          {passwordSaving ? "Updating..." : "Update Password"}
         </button>
       </div>
     );
@@ -576,6 +684,7 @@ export default function SettingsPage() {
           {/* Content */}
           <div className="min-w-0 flex-1 rounded-xl border border-gray-800 bg-gray-900/60 p-6 sm:p-8">
             {activeTab === "profile" && renderProfile()}
+            {activeTab === "password" && renderPassword()}
             {activeTab === "organization" && renderOrganization()}
             {activeTab === "tokens" && renderTokens()}
             {activeTab === "notifications" && renderNotifications()}

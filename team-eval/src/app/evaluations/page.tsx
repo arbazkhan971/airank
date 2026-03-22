@@ -101,11 +101,11 @@ function scoreBg(score: number): string {
 function statusBadge(status: Evaluation["status"]) {
   const map = {
     Draft: {
-      classes: "bg-gray-800 text-gray-300 border-gray-700",
+      classes: "bg-amber-950/70 text-amber-300 border-amber-800/50",
       icon: FileText,
     },
     Submitted: {
-      classes: "bg-indigo-950/70 text-indigo-300 border-indigo-800/50",
+      classes: "bg-blue-950/70 text-blue-300 border-blue-800/50",
       icon: Send,
     },
     Acknowledged: {

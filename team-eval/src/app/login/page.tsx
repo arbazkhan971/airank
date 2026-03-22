@@ -12,9 +12,29 @@ export default function LoginPage() {
     signIn("google", { callbackUrl: "/dashboard" });
   }
 
-  function handleEmailSignIn(e: FormEvent) {
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleEmailSignIn(e: FormEvent) {
     e.preventDefault();
-    // Email/password auth to be implemented
+    setError("");
+    setLoading(true);
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      if (result?.error) {
+        setError("Invalid email or password. Check the credentials provided by your admin.");
+      } else {
+        window.location.href = "/dashboard";
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -122,11 +142,18 @@ export default function LoginPage() {
               />
             </div>
 
+            {error && (
+              <div className="rounded-lg border border-red-800/50 bg-red-900/20 px-4 py-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50"
             >
-              Sign in
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
@@ -134,7 +161,7 @@ export default function LoginPage() {
           <p className="mt-6 text-center text-sm text-gray-500">
             Don&apos;t have an account?{" "}
             <span className="text-gray-400">
-              Contact your admin for an invitation
+              Contact your admin for credentials
             </span>
           </p>
         </div>
