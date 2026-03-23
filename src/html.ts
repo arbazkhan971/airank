@@ -203,7 +203,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
         by <a href="https://x.com/makash?utm_source=ccrank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">@makash</a>
       </p>
       <p class="text-xs text-gray-600 mb-3">
-        Powered by <a href="https://github.com/ryoppippi/ccusage?utm_source=ccrank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">ccusage</a> <span class="mx-1">|</span> <a href="https://github.com/makash/claude-leaderboard-using-ccusage?utm_source=ccrank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">Open Source</a>
+        Powered by <a href="https://github.com/ryoppippi/ccusage?utm_source=airank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">ccusage</a> <span class="mx-1">|</span> Built on <a href="https://github.com/makash/ccrank?utm_source=airank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">ccrank</a> by <a href="https://github.com/makash?utm_source=airank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">@makash</a> <span class="mx-1">|</span> <a href="https://github.com/arbazkhan971/airank?utm_source=airank&utm_medium=web&utm_campaign=footer" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-300 transition">Open Source</a>
       </p>
       <div class="flex items-center justify-center gap-4">
         <a href="https://x.com/makash?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=branding" target="_blank" rel="noopener" class="text-gray-600 hover:text-gray-300 transition" title="X / Twitter">
@@ -643,22 +643,22 @@ export function uploadPage(user: User, message: { type: 'success' | 'error'; tex
       key: 'mac',
       label: 'macOS (Apple Silicon)',
       file: 'ccrank-git_darwin_arm64',
-      download: 'https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_darwin_arm64',
-      command: 'curl -L -o ccrank-git https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_darwin_arm64 && chmod +x ccrank-git && ./ccrank-git --url https://ccrank.dev --token YOUR_TOKEN',
+      download: 'https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_darwin_arm64',
+      command: `curl -L -o ccrank-git https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_darwin_arm64 && chmod +x ccrank-git && ./ccrank-git --url ${_baseUrl} --token YOUR_TOKEN`,
     },
     {
       key: 'linux',
       label: 'Linux x64',
       file: 'ccrank-git_linux_amd64',
-      download: 'https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_linux_amd64',
-      command: 'curl -L -o ccrank-git https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_linux_amd64 && chmod +x ccrank-git && ./ccrank-git --url https://ccrank.dev --token YOUR_TOKEN',
+      download: 'https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_linux_amd64',
+      command: `curl -L -o ccrank-git https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_linux_amd64 && chmod +x ccrank-git && ./ccrank-git --url ${_baseUrl} --token YOUR_TOKEN`,
     },
     {
       key: 'windows',
       label: 'Windows x64',
       file: 'ccrank-git_windows_amd64.exe',
-      download: 'https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_windows_amd64.exe',
-      command: 'powershell -Command \"iwr -Uri https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_windows_amd64.exe -OutFile ccrank-git.exe; .\\\\ccrank-git.exe --url https://ccrank.dev --token YOUR_TOKEN\"',
+      download: 'https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_windows_amd64.exe',
+      command: `powershell -Command "iwr -Uri https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_windows_amd64.exe -OutFile ccrank-git.exe; .\\\\ccrank-git.exe --url ${_baseUrl} --token YOUR_TOKEN"`,
     },
   ];
 
@@ -1456,9 +1456,9 @@ export function settingsPage(
           </div>
           <div class="mt-4 text-xs text-gray-500">
             Download the CLI:
-            <a class="text-purple-300 hover:text-purple-200 ml-2" href="https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_darwin_arm64" target="_blank" rel="noopener">macOS arm64</a>
-            <a class="text-purple-300 hover:text-purple-200 ml-2" href="https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_linux_amd64" target="_blank" rel="noopener">Linux x64</a>
-            <a class="text-purple-300 hover:text-purple-200 ml-2" href="https://github.com/makash/claude-leaderboard-using-ccusage/releases/latest/download/ccrank-git_windows_amd64.exe" target="_blank" rel="noopener">Windows x64</a>
+            <a class="text-purple-300 hover:text-purple-200 ml-2" href="https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_darwin_arm64" target="_blank" rel="noopener">macOS arm64</a>
+            <a class="text-purple-300 hover:text-purple-200 ml-2" href="https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_linux_amd64" target="_blank" rel="noopener">Linux x64</a>
+            <a class="text-purple-300 hover:text-purple-200 ml-2" href="https://github.com/arbazkhan971/airank/releases/latest/download/ccrank-git_windows_amd64.exe" target="_blank" rel="noopener">Windows x64</a>
           </div>
         </div>
 
