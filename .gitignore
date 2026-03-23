@@ -3,3 +3,6 @@ dist/
 .wrangler/
 .dev.vars
 *.log
+.godmode/
+cli/ccrank-git/ccrank-git
+cli/ccrank-git/dist/
