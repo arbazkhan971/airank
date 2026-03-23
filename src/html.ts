@@ -41,7 +41,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
     ? `<nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <a href="/" class="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-            ccrank.dev
+            ${_siteName}
           </a>
           <!-- Desktop nav -->
           <div class="hidden md:flex items-center gap-6">
@@ -90,7 +90,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
     : `<nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <a href="/" class="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-            ccrank.dev
+            ${_siteName}
           </a>
           <!-- Desktop nav -->
           <div class="hidden md:flex items-center gap-6">
@@ -301,7 +301,7 @@ export function landingPage(topEntries: LeaderboardEntry[]): string {
     `<div class="flex flex-col items-center justify-center min-h-[70vh] text-center">
       <div class="mb-12">
         <h1 class="text-6xl font-extrabold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent leading-tight">
-          ccrank.dev
+          ${_siteName}
         </h1>
         <p class="text-xl text-gray-400 max-w-lg mx-auto leading-relaxed">
           Track Claude usage. Benchmark your leverage.
