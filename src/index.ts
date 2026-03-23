@@ -1080,12 +1080,17 @@ app.post('/api/upload', async (c) => {
     )
   );
 
-  await c.env.DB.batch(batch);
+  try {
+    await c.env.DB.batch(batch);
+  } catch (err: any) {
+    return c.json({ ok: false, error: 'Failed to save usage data: ' + (err.message || 'database error') }, 500);
+  }
 
   return c.json({
     ok: true,
     entries: report.entries.length,
     type: report.type,
+    platform: report.platform,
     summary: report.summary,
   });
 });
@@ -1177,7 +1182,11 @@ app.post('/api/git/upload', async (c) => {
       stmt.bind(generateId(), user.id, projectId, day.date, machine, day.commitCount)
     );
 
-    await c.env.DB.batch(batch);
+    try {
+      await c.env.DB.batch(batch);
+    } catch (err: any) {
+      return c.json({ ok: false, error: 'Failed to save git stats: ' + (err.message || 'database error') }, 500);
+    }
   }
 
   await c.env.DB.prepare(
