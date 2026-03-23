@@ -150,20 +150,14 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Claude Leaderboard",
-    "description": "Install the ccrank CLI to track your Claude Code usage and see where you rank.",
+    "name": "AIRank",
+    "description": "AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.",
     "url": "${_baseUrl}/",
     "applicationCategory": "DeveloperApplication",
     "creator": {
-      "@type": "Person",
-      "name": "Akash Mahajan",
-      "url": "https://github.com/makash",
-      "sameAs": [
-        "https://x.com/makash",
-        "https://www.linkedin.com/in/akashm/",
-        "https://www.youtube.com/@makash",
-        "https://github.com/makash"
-      ]
+      "@type": "Organization",
+      "name": "AIRank",
+      "url": "https://github.com/arbazkhan971/airank"
     }
   }
   </script>
