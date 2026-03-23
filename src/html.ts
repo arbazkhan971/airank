@@ -130,9 +130,9 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)} | ${_siteName}</title>
   <meta name="author" content="Akash Mahajan">
-  <meta name="description" content="Install the ccrank CLI to track your Claude Code usage and see where you rank.">
+  <meta name="description" content="AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.">
   <meta property="og:title" content="${escapeHtml(title)} | ${_siteName}">
-  <meta property="og:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'Install the ccrank CLI to track your Claude Code usage and see where you rank.'}">
+  <meta property="og:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.'}">
   <meta property="og:type" content="website">
   <meta property="og:image" content="${ogOverrides?.image || 'https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp'}">
   <meta property="og:image:width" content="1200">
@@ -140,7 +140,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@makash">
   <meta name="twitter:title" content="${escapeHtml(title)} | ${_siteName}">
-  <meta name="twitter:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'Install the ccrank CLI to track your Claude Code usage and see where you rank.'}">
+  <meta name="twitter:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.'}">
   <meta name="twitter:image" content="${ogOverrides?.image || 'https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp'}">
   <meta property="og:site_name" content="${_siteName}">
   <meta property="og:url" content="${_baseUrl}/">
