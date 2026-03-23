@@ -1,13 +1,13 @@
 {
-  "name": "claude-leaderboard",
-  "version": "1.0.0",
+  "name": "airank",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create claude-leaderboard-db",
-    "db:migrate": "wrangler d1 execute claude-leaderboard-db --file=migrations/0001_initial.sql && wrangler d1 execute claude-leaderboard-db --file=migrations/0003_add_source.sql && wrangler d1 execute claude-leaderboard-db --file=migrations/0004_drop_old_index.sql && wrangler d1 execute claude-leaderboard-db --file=migrations/0005_add_sharing.sql && wrangler d1 execute claude-leaderboard-db --file=migrations/0006_add_fav_tools.sql && wrangler d1 execute claude-leaderboard-db --file=migrations/0007_add_git_metadata.sql && wrangler d1 execute claude-leaderboard-db --file=migrations/0008_add_git_machine.sql",
-    "db:migrate:local": "wrangler d1 execute claude-leaderboard-db --local --file=migrations/0001_initial.sql && wrangler d1 execute claude-leaderboard-db --local --file=migrations/0003_add_source.sql && wrangler d1 execute claude-leaderboard-db --local --file=migrations/0004_drop_old_index.sql && wrangler d1 execute claude-leaderboard-db --local --file=migrations/0005_add_sharing.sql && wrangler d1 execute claude-leaderboard-db --local --file=migrations/0006_add_fav_tools.sql && wrangler d1 execute claude-leaderboard-db --local --file=migrations/0007_add_git_metadata.sql && wrangler d1 execute claude-leaderboard-db --local --file=migrations/0008_add_git_machine.sql",
+    "db:migrate": "for f in migrations/0001_initial.sql migrations/0002_seed_invites.sql migrations/0003_add_source.sql migrations/0004_drop_old_index.sql migrations/0005_add_sharing.sql migrations/0006_add_fav_tools.sql migrations/0007_add_git_metadata.sql migrations/0008_add_git_machine.sql migrations/0009_add_platform.sql migrations/0010_add_token_expiry.sql; do echo \"Running $f...\"; npx wrangler d1 execute claude-leaderboard-db --file=$f; done",
+    "db:migrate:local": "for f in migrations/0001_initial.sql migrations/0002_seed_invites.sql migrations/0003_add_source.sql migrations/0004_drop_old_index.sql migrations/0005_add_sharing.sql migrations/0006_add_fav_tools.sql migrations/0007_add_git_metadata.sql migrations/0008_add_git_machine.sql migrations/0009_add_platform.sql migrations/0010_add_token_expiry.sql; do echo \"Running $f...\"; npx wrangler d1 execute claude-leaderboard-db --local --file=$f; done",
     "db:seed": "wrangler d1 execute claude-leaderboard-db --file=migrations/0002_seed_invites.sql",
     "db:seed:local": "wrangler d1 execute claude-leaderboard-db --local --file=migrations/0002_seed_invites.sql",
     "git:upload": "node scripts/git-metadata.js"
