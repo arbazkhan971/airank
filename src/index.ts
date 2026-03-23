@@ -336,7 +336,8 @@ app.get('/leaderboard', async (c) => {
     ${dateBindings.length > 0 ? `WHERE d.date >= ? AND d.date <= ?` : ''}
     GROUP BY u.id
     HAVING total_cost > 0
-    ORDER BY total_cost DESC`;
+    ORDER BY total_cost DESC
+    LIMIT 200`;
 
   const stmt = c.env.DB.prepare(query);
   const results = dateBindings.length > 0
