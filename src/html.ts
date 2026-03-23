@@ -915,62 +915,24 @@ export function aboutPage(user: User | null = null): string {
   return layout(
     'About',
     `<div class="max-w-2xl mx-auto">
-      <h1 class="text-3xl font-extrabold mb-2">The Story Behind ccrank.dev</h1>
-      <p class="text-gray-400 mb-10">How a WhatsApp message became a live leaderboard in minutes.</p>
+      <h1 class="text-3xl font-extrabold mb-2">About AIRank</h1>
+      <p class="text-gray-400 mb-10">AI usage analytics for teams using Claude Code and Codex CLI.</p>
 
       <p class="text-gray-400 mb-8 text-lg leading-relaxed">
-        ccrank.dev is an open-source developer ranking platform for Claude Code usage.
-        Track, compare, and compete on your team's AI-assisted development metrics.
+        AIRank is an open-source platform for tracking, comparing, and competing on AI coding tool usage.
+        Whether your team uses Claude Code, OpenAI Codex CLI, or both &mdash; AIRank gives you the metrics that matter.
       </p>
 
-      <!-- The Spark -->
+      <!-- What it does -->
       <section class="mb-10">
-        <h2 class="text-xl font-bold mb-4 text-purple-400">The Spark</h2>
-        <p class="text-gray-300 leading-relaxed mb-4">
-          It started with a message in a WhatsApp group. <strong class="text-white">Thiyagarajan Maruthavanan (Rajan)</strong> dropped a simple idea:
-        </p>
-        <div class="bg-green-900/20 border border-green-800/30 rounded-xl p-5 mb-4">
-          <p class="text-sm text-gray-300 italic">
-            &ldquo;Code a Leaderboard Vivek? Let everyone submit their ccusage :)&rdquo;
-          </p>
-        </div>
-        <img src="${IMG_RAJAN_MESSAGE}" alt="Rajan's original WhatsApp message suggesting the leaderboard" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
-      </section>
-
-      <!-- Built on a Phone -->
-      <section class="mb-10">
-        <h2 class="text-xl font-bold mb-4 text-cyan-400">Built on a Phone</h2>
-        <p class="text-gray-300 leading-relaxed mb-4">
-          <strong class="text-white">Akash</strong> saw the message and thought &mdash; why not? He opened Claude Code on his phone,
-          described what he wanted, and let Claude build it. The entire app was generated, deployed, and live in minutes.
-        </p>
-        <p class="text-gray-400 text-sm mb-4 italic">
-          &ldquo;The only hardwork I had to do was run 4 npm commands.&rdquo;
-        </p>
-        <img src="${IMG_CLAUDE_BUILDING}" alt="Claude Code building the leaderboard app" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
-      </section>
-
-      <!-- Sharing it -->
-      <section class="mb-10">
-        <h2 class="text-xl font-bold mb-4 text-pink-400">Going Live</h2>
-        <p class="text-gray-300 leading-relaxed mb-4">
-          Minutes later, the app was live on Cloudflare Workers. Akash shared the link in the group, and people started running the CLI immediately.
-        </p>
-        <img src="${IMG_APP_SHARED}" alt="Sharing the live app in the WhatsApp group" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
-        <p class="text-gray-300 leading-relaxed mb-4">
-          Then came the domain &mdash; <strong class="text-white">ccrank.dev</strong> &mdash; because every side project deserves a proper home.
-        </p>
-        <img src="${IMG_DOMAIN_PURCHASE}" alt="Buying the ccrank.dev domain" class="rounded-lg border border-gray-800 w-full mb-4" loading="lazy">
-      </section>
-
-      <!-- What it's for -->
-      <section class="mb-10">
-        <h2 class="text-xl font-bold mb-4 text-yellow-400">What This Leaderboard Is For</h2>
+        <h2 class="text-xl font-bold mb-4 text-purple-400">What AIRank Does</h2>
         <ul class="text-gray-300 space-y-2">
-          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Track your Claude Code usage across days and weeks</li>
-          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Friendly competition &mdash; who&rsquo;s the biggest Claude power user?</li>
-          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Cost awareness &mdash; see what Claude Code actually costs</li>
-          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Fun titles &mdash; from Apprentice to Claude Maximalist</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Track Claude Code & Codex CLI usage across days, weeks, and months</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Platform breakdown &mdash; see Claude vs Codex usage side by side</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Leaderboard with efficiency metrics &mdash; output/$, cache rate, output ratio</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Team evaluation &mdash; understand how your team leverages AI</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Shareable stats cards for Twitter/LinkedIn</li>
+          <li class="flex items-start gap-2"><span class="text-purple-400 mt-1">&#x2022;</span> Self-hostable &mdash; deploy to Cloudflare Workers or Docker</li>
         </ul>
       </section>
 
@@ -980,17 +942,33 @@ export function aboutPage(user: User | null = null): string {
         <ol class="text-gray-300 space-y-3">
           <li class="flex items-start gap-3">
             <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
-            <span>Generate your token in <a href="/settings" class="text-purple-400 hover:text-purple-300 transition">Settings</a></span>
+            <span>Sign in and generate an API token in <a href="/settings" class="text-purple-400 hover:text-purple-300 transition">Settings</a></span>
           </li>
           <li class="flex items-start gap-3">
             <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
-            <span>Download the ccrank CLI and run it from your project folder</span>
+            <span>Download the CLI and run it &mdash; it auto-uploads Claude Code and Codex usage</span>
           </li>
           <li class="flex items-start gap-3">
             <span class="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
-            <span>See your rank, earn titles, and compete with others</span>
+            <span>See your rank, earn titles, and compete with your team</span>
           </li>
         </ol>
+      </section>
+
+      <!-- Heritage -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 text-cyan-400">Built on ccrank</h2>
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <p class="text-sm text-gray-300 leading-relaxed mb-4">
+            AIRank is built on <a href="https://github.com/makash/ccrank" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition font-medium">ccrank</a>,
+            the original Claude Code leaderboard created by <a href="https://github.com/makash" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition font-medium">Akash Mahajan (@makash)</a>.
+            The entire foundation &mdash; leaderboard, usage parsing, invite system, social cards, and the beautiful dark UI &mdash; was built by Akash on a phone using Claude Code.
+          </p>
+          <p class="text-sm text-gray-400">
+            AIRank extends ccrank with dual-platform support (Claude + Codex), team evaluation features, and self-hosting options.
+            See the original project at <a href="https://ccrank.dev" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">ccrank.dev</a>.
+          </p>
+        </div>
       </section>
 
       <!-- Credits -->
@@ -998,26 +976,27 @@ export function aboutPage(user: User | null = null): string {
         <h2 class="text-xl font-bold mb-4 text-gray-300">Credits</h2>
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
           <div>
-            <div class="text-sm font-semibold text-white mb-1">Powered by ccusage</div>
+            <div class="text-sm font-semibold text-white mb-1">Original project</div>
             <p class="text-sm text-gray-400">
-              <a href="https://github.com/ryoppippi/ccusage?utm_source=claude-leaderboard&utm_medium=web&utm_campaign=about" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">ccusage</a>
-              by <strong class="text-gray-300">ryoppippi</strong> &mdash; the CLI tool that makes Claude Code usage tracking possible.
-              Without it, there&rsquo;d be no data to leaderboard.
+              <a href="https://github.com/makash/ccrank" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">ccrank</a>
+              by <strong class="text-gray-300">Akash Mahajan (@makash)</strong> &mdash; the Claude Code leaderboard that started it all.
+            </p>
+          </div>
+          <div class="border-t border-gray-800 pt-4">
+            <div class="text-sm font-semibold text-white mb-1">Usage tracking</div>
+            <p class="text-sm text-gray-400">
+              <a href="https://github.com/ryoppippi/ccusage" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">ccusage</a> &amp;
+              <a href="https://www.npmjs.com/package/@ccusage/codex" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">@ccusage/codex</a>
+              by <strong class="text-gray-300">ryoppippi</strong> &mdash; the CLI tools that make usage tracking possible.
             </p>
           </div>
           <div class="border-t border-gray-800 pt-4">
             <div class="text-sm font-semibold text-white mb-1">Built with</div>
             <p class="text-sm text-gray-400">
-              <a href="https://claude.ai" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Claude Code</a> +
               <a href="https://hono.dev" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Hono</a> +
               <a href="https://workers.cloudflare.com" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Cloudflare Workers</a> +
-              <a href="https://developers.cloudflare.com/d1/" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">D1</a>
-            </p>
-          </div>
-          <div class="border-t border-gray-800 pt-4">
-            <div class="text-sm font-semibold text-white mb-1">The spark</div>
-            <p class="text-sm text-gray-400">
-              <strong class="text-gray-300">Thiyagarajan Maruthavanan (Rajan)</strong> &mdash; for the idea that started it all.
+              <a href="https://developers.cloudflare.com/d1/" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">D1</a> +
+              <a href="https://tailwindcss.com" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition">Tailwind CSS</a>
             </p>
           </div>
         </div>
