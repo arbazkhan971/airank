@@ -1,44 +1,49 @@
 <div align="center">
 
-# Claude Leaderboard
+# AIRank
 
-### Who burns the most Claude tokens on your team?
+### AI Usage Analytics & Team Evaluation Platform
 
-[![Live Demo](https://img.shields.io/badge/demo-ccrank.dev-8B5CF6?style=for-the-badge)](https://ccrank.dev)
+[![Built on ccrank](https://img.shields.io/badge/built%20on-ccrank.dev-8B5CF6?style=for-the-badge)](https://github.com/makash/ccrank)
+[![Open Source](https://img.shields.io/badge/open%20source-MIT-green?style=for-the-badge)](LICENSE)
 
-[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
-[![Hono](https://img.shields.io/badge/Hono-E36002?style=flat-square&logo=hono&logoColor=white)](https://hono.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+**Track Claude Code & Codex CLI usage across your team. Evaluate productivity. Ship faster.**
 
-**Track, compare, and compete on [Claude Code](https://claude.ai) usage across your team.**
-Install the ccrank CLI (powered by [ccusage](https://github.com/ryoppippi/ccusage)). See the leaderboard. Earn titles. Talk trash.
-
-Deploy to Cloudflare Workers in under 10 minutes. Free tier. Zero cost.
-
-<br />
-
-<a href="https://ccrank.dev/leaderboard?sort=output_per_dollar">
-  <img src="docs/images/leaderboard-top10.png" alt="Claude Leaderboard Top 10" width="600" />
-</a>
-
-<br />
-<br />
-
-[Live Demo](https://ccrank.dev) &nbsp;&middot;&nbsp; [Quick Start](#-quick-start) &nbsp;&middot;&nbsp; [Features](#-features) &nbsp;&middot;&nbsp; [API](#-api-routes)
+Built on top of [ccrank](https://github.com/makash/ccrank) by [Akash Mahajan](https://github.com/makash).
 
 </div>
 
 ---
 
-## Origin Story
+> **Credit & Attribution**
+>
+> This project is a fork of [**ccrank**](https://github.com/makash/ccrank) (also live at [ccrank.dev](https://ccrank.dev)), originally created by [**Akash Mahajan** (@makash)](https://github.com/makash). The entire foundation — leaderboard, usage tracking, social cards, invite system, and the beautiful dark UI — was built by Akash, famously on a phone using Claude Code.
+>
+> AIRank extends ccrank with team evaluation features, dual-platform support (Claude Code + OpenAI Codex CLI), credential-based auth, Docker self-hosting, and a setup wizard. We're grateful to Akash for open-sourcing ccrank and making this possible.
+>
+> **Original project:** [github.com/makash/ccrank](https://github.com/makash/ccrank) | [ccrank.dev](https://ccrank.dev)
+>
+> **Powered by:** [ccusage](https://github.com/ryoppippi/ccusage) by [ryoppippi](https://github.com/ryoppippi)
 
-It started with a WhatsApp message:
+---
 
-> *"Code a Leaderboard Vivek? Let everyone submit their ccusage :)"*
+## What's Different from ccrank?
 
-The entire app was built on a phone using [Claude Code](https://claude.ai), deployed to Cloudflare Workers in minutes, and has been running at [ccrank.dev](https://ccrank.dev) ever since. No laptop required. Just vibes and Claude.
+| Feature | ccrank | AIRank |
+|---------|--------|--------|
+| Claude Code tracking | Yes | Yes |
+| OpenAI Codex CLI tracking | - | Yes |
+| Platform breakdown (Claude vs Codex) | - | Yes |
+| Google OAuth login | Yes | Yes |
+| Credential-based auth (email/password) | - | Yes |
+| Admin-created team accounts | - | Yes |
+| Setup wizard | - | Yes |
+| Docker self-hosting | - | Yes |
+| Export API | - | Yes |
+| Cloudflare Workers deployment | Yes | Yes |
+| Invite system | Yes | Yes |
+| Social cards & sharing | Yes | Yes |
+| Leaderboard + time filters | Yes | Yes |
 
 ---
 
@@ -46,115 +51,68 @@ The entire app was built on a phone using [Claude Code](https://claude.ai), depl
 
 | | Feature | Description |
 |---|---|---|
-| :trophy: | **Live Leaderboard** | Ranked by total cost, tokens, days active, and last activity |
-| :medal_sports: | **Gamified Titles** | Apprentice, Practitioner, Power User, Token Whale, Claude Maximalist |
-| :clock3: | **Time-Travel History** | Browse daily, weekly, and monthly snapshots with date navigation |
-| :computer: | **Multi-Machine Tracking** | Aggregate usage across laptops, desktops, and cloud instances |
-| :frame_with_picture: | **Shareable Social Cards** | OG-image-ready SVG cards with your stats for Twitter/LinkedIn |
-| :lock: | **Google OAuth** | One-click sign-in, no passwords |
-| :ticket: | **Invite-Only Registration** | Each user gets 3 invite codes to share |
-| :gear: | **Admin Panel** | Bulk invite generation, platform-wide stats |
-| :new_moon: | **Dark Theme** | Beautiful dark UI, fully responsive on mobile |
-| :moneybag: | **Zero Cost Hosting** | Runs entirely on Cloudflare Workers + D1 free tier |
+| :trophy: | **Leaderboard** | Ranked by cost, tokens, output/$, cache rate, output ratio |
+| :robot: | **Dual Platform** | Track both Claude Code and OpenAI Codex CLI usage side-by-side |
+| :bar_chart: | **Platform Breakdown** | See Claude vs Codex split on profiles and dashboards |
+| :busts_in_silhouette: | **Team Evaluation** | Admin-created accounts, credential auth, team management |
+| :clock3: | **Time-Travel History** | Daily, weekly, monthly snapshots with platform filters |
+| :frame_with_picture: | **Social Cards** | Shareable SVG/PNG stats cards for Twitter/LinkedIn |
+| :whale: | **Docker Self-Hosting** | One-command deploy with Docker Compose |
+| :magic_wand: | **Setup Wizard** | Guided first-run configuration |
+| :outbox_tray: | **Export API** | Export team usage data programmatically |
+| :computer: | **Multi-Machine** | Aggregate usage across laptops, desktops, cloud instances |
+| :medal_sports: | **Gamified Titles** | Apprentice → Practitioner → Power User → Token Whale → Claude Maximalist |
+| :new_moon: | **Dark Theme** | Beautiful dark UI, fully responsive |
 
 ---
 
 ## Quick Start
 
-### Prerequisites
-
-- [Node.js](https://nodejs.org) v18+
-- [Cloudflare](https://cloudflare.com) account (free tier)
-- [Google Cloud](https://console.cloud.google.com) project (for OAuth)
-
-### 1. Clone and install
+### Option 1: Cloudflare Workers (Free)
 
 ```bash
-git clone https://github.com/makash/claude-leaderboard-using-ccusage.git
-cd claude-leaderboard-using-ccusage
+git clone https://github.com/arbazkhan971/airank.git
+cd airank
 npm install
-```
-
-### 2. Create D1 database
-
-```bash
 npx wrangler login
 npx wrangler d1 create claude-leaderboard-db
-```
-
-Copy the `database_id` into `wrangler.toml`:
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "claude-leaderboard-db"
-database_id = "YOUR_DATABASE_ID_HERE"
-```
-
-### 3. Run migrations
-
-```bash
+# Update database_id in wrangler.toml
 npm run db:migrate
-npm run db:seed
-```
-
-### 4. Configure Google OAuth
-
-1. Create an **OAuth 2.0 Client ID** at [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials)
-2. Add redirect URI: `https://your-worker.workers.dev/auth/google/callback`
-3. Update `wrangler.toml`:
-   ```toml
-   [vars]
-   GOOGLE_CLIENT_ID = "your-client-id.apps.googleusercontent.com"
-   ADMIN_EMAIL = "you@gmail.com"
-   ```
-4. Set secrets:
-   ```bash
-   npx wrangler secret put GOOGLE_CLIENT_SECRET
-   npx wrangler secret put SESSION_SECRET    # use: openssl rand -hex 32
-   ```
-
-### 5. Deploy
-
-```bash
 npm run deploy
 ```
 
-Share the URL. Start competing.
+### Option 2: Docker Self-Hosting
+
+```bash
+git clone https://github.com/arbazkhan971/airank.git
+cd airank
+docker compose up -d
+```
+
+Visit the setup wizard at `http://localhost:8787` to configure.
 
 ---
 
-## Usage
+## CLI Usage
 
-### Install the CLI
-
-Sign in at your leaderboard URL, go to **Install**, generate a token in **Settings**, and run the CLI from your project folder. The Install page includes OS-specific one-liners.
-
-### Git metadata (optional)
-
-Use the Go CLI (binary) to upload git activity. It auto-creates `~/.ccrank/repos.json` and uses it for uploads.
-
-Add a repo (from inside a project folder):
+The CLI uploads usage data from both platforms automatically:
 
 ```bash
-ccrank-git --add-repo
+# Install and run
+ccrank-git --url https://your-instance.com --token YOUR_TOKEN
 ```
 
-If you run `--add-repo` outside a repo (e.g., `~/code`), it scans recursively and adds the 30 most recently active repos.
+It runs both `npx ccusage@latest daily --json` (Claude Code) and `npx @ccusage/codex@latest daily --json` (Codex CLI), uploading whatever data is available.
 
-Then upload:
+### Manual upload
 
 ```bash
-ccrank-git --url https://your-worker.workers.dev --token YOUR_TOKEN
+# Claude Code
+npx ccusage@latest daily --json > report.json
+
+# Codex CLI
+npx @ccusage/codex@latest daily --json > report.json
 ```
-
-ccusage runs automatically in the Go CLI. See `docs/git-metadata.md` for OS-specific downloads and details.
-
-Generate your token in **Settings → Git Metadata**.
-
-### Invite your team
-
-Each user gets 3 invite codes. Go to **Invites** to generate and share them. Admins can bulk-generate from the admin panel.
 
 ---
 
@@ -162,22 +120,13 @@ Each user gets 3 invite codes. Go to **Invites** to generate and share them. Adm
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `GET` | `/` | Optional | Landing / dashboard |
-| `GET` | `/leaderboard` | No | Public leaderboard |
-| `GET` | `/history` | No | Time-travel history |
-| `GET` | `/about` | No | Origin story |
-| `GET` | `/card/:slug` | No | Public stats card |
-| `GET` | `/card/:slug/image.svg` | No | OG image (SVG) |
-| `GET` | `/settings` | Yes | Sharing settings |
-| `GET` | `/upload` | Yes | Install page |
-| `GET` | `/invites` | Yes | Manage invites |
-| `GET` | `/admin` | Admin | Admin panel |
-| `POST` | `/api/upload` | Yes | Upload ccusage JSON (used by CLI) |
-| `POST` | `/api/settings/sharing` | Yes | Save sharing prefs |
-| `GET` | `/api/leaderboard` | No | Leaderboard JSON |
-| `GET` | `/api/me` | Yes | Current user + stats |
-| `POST` | `/api/invites/create` | Yes | Generate invite code |
-| `POST` | `/api/admin/invites` | Admin | Bulk invite codes |
+| `GET` | `/leaderboard` | No | Leaderboard with platform filters |
+| `GET` | `/history` | No | Historical rankings with platform filters |
+| `GET` | `/user/:slug` | No | Public user profile with platform breakdown |
+| `POST` | `/api/upload` | Token | Upload usage JSON (auto-detects platform) |
+| `GET` | `/api/leaderboard` | No | Leaderboard JSON (`?platform=claude\|codex`) |
+| `GET` | `/api/me` | Token | Current user stats + platform breakdown |
+| `GET` | `/api/export` | Admin | Export team data |
 
 ---
 
@@ -186,139 +135,77 @@ Each user gets 3 invite codes. Go to **Invites** to generate and share them. Adm
 ```
 src/
   index.ts        Hono routes, middleware, API endpoints
-  auth.ts         HMAC-SHA256 sessions + Google OAuth
-  parser.ts       ccusage JSON parser (daily/weekly/session)
+  auth.ts         Sessions, Google OAuth, credential auth
+  parser.ts       ccusage JSON parser with platform detection
   html.ts         Dark-themed HTML templates (Tailwind CSS)
   utils.ts        Shared types and utilities
   card.ts         Social card SVG generation (satori)
-  images.ts       Base64 screenshots for About page
+cli/
+  ccrank-git/     Go CLI for git metadata + dual-platform upload
 migrations/
-  0001_initial.sql         Database schema
-  0002_seed_invites.sql    Seed invite codes
-  0003_add_source.sql      Multi-machine tracking
-  0004_drop_old_index.sql  Index cleanup
-  0005_add_sharing.sql     Social card sharing
+  0001-0009       Database schema evolution
 ```
 
 ---
 
-## Local Development
+## Acknowledgments
 
-```bash
-npm run db:migrate:local
-npm run db:seed:local
-
-# Create .dev.vars for local secrets
-cat > .dev.vars << 'EOF'
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-SESSION_SECRET=dev-secret-change-me
-ADMIN_EMAIL=you@gmail.com
-EOF
-
-npm run dev
-```
-
-Add `http://localhost:8787/auth/google/callback` as an authorized redirect URI in Google Cloud Console.
-
----
-
-## Built With
+This project stands on the shoulders of:
 
 <table>
   <tr>
-    <td align="center" width="140">
-      <a href="https://hono.dev">
-        <img src="https://hono.dev/images/logo-small.png" width="40" /><br />
-        <b>Hono</b>
-      </a><br />
-      <sub>Web framework</sub>
+    <td align="center" width="200">
+      <a href="https://github.com/makash/ccrank">
+        <img src="https://github.com/makash.png" width="60" style="border-radius: 50%;" /><br />
+        <b>Akash Mahajan</b><br />
+        <sub>@makash</sub>
+      </a><br /><br />
+      <sub>Creator of <a href="https://ccrank.dev">ccrank.dev</a> — the original Claude Code leaderboard. Built the entire foundation this project is based on. Built on a phone with Claude Code.</sub>
     </td>
-    <td align="center" width="140">
-      <a href="https://workers.cloudflare.com">
-        <img src="https://www.svgrepo.com/show/353564/cloudflare.svg" width="40" /><br />
-        <b>CF Workers</b>
-      </a><br />
-      <sub>Serverless compute</sub>
-    </td>
-    <td align="center" width="140">
-      <a href="https://developers.cloudflare.com/d1/">
-        <img src="https://www.svgrepo.com/show/354428/sqlite.svg" width="40" /><br />
-        <b>D1 (SQLite)</b>
-      </a><br />
-      <sub>Edge database</sub>
-    </td>
-    <td align="center" width="140">
-      <a href="https://tailwindcss.com">
-        <img src="https://www.svgrepo.com/show/374118/tailwind.svg" width="40" /><br />
-        <b>Tailwind CSS</b>
-      </a><br />
-      <sub>Styling via CDN</sub>
-    </td>
-    <td align="center" width="140">
+    <td align="center" width="200">
       <a href="https://github.com/ryoppippi/ccusage">
-        <img src="https://github.githubassets.com/favicons/favicon-dark.svg" width="40" /><br />
-        <b>ccusage</b>
-      </a><br />
-      <sub>Usage tracking CLI</sub>
+        <img src="https://github.com/ryoppippi.png" width="60" style="border-radius: 50%;" /><br />
+        <b>ryoppippi</b>
+      </a><br /><br />
+      <sub>Creator of <a href="https://github.com/ryoppippi/ccusage">ccusage</a> and <a href="https://www.npmjs.com/package/@ccusage/codex">@ccusage/codex</a> — the CLI tools that make usage tracking possible for both Claude Code and Codex CLI.</sub>
     </td>
   </tr>
 </table>
 
----
+### Built With
 
-## Deploying
-
-Deployments are triggered by **release tags** — pushing code or merging PRs does not deploy automatically.
-
-To deploy a new version:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-Or create a release via GitHub:
-
-```bash
-gh release create v1.0.0 --title "v1.0.0" --notes "What changed"
-```
-
-A GitHub Actions workflow picks up the tag, runs `wrangler deploy`, and pushes to Cloudflare Workers.
+- [ccrank](https://github.com/makash/ccrank) — The original Claude Code leaderboard by [@makash](https://github.com/makash)
+- [ccusage](https://github.com/ryoppippi/ccusage) — Claude Code usage analyzer by [@ryoppippi](https://github.com/ryoppippi)
+- [@ccusage/codex](https://www.npmjs.com/package/@ccusage/codex) — Codex CLI usage analyzer
+- [Hono](https://hono.dev) — Lightweight web framework
+- [Cloudflare Workers](https://workers.cloudflare.com) + [D1](https://developers.cloudflare.com/d1/) — Serverless edge compute + SQLite
+- [Tailwind CSS](https://tailwindcss.com) — Utility-first CSS
+- [Satori](https://github.com/vercel/satori) — SVG generation for social cards
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues and pull requests.
+Contributions welcome! Please open issues and pull requests.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## Author
-
-**Akash Mahajan** ([@makash](https://github.com/makash))
-
-[![GitHub](https://img.shields.io/badge/GitHub-makash-181717?style=flat-square&logo=github)](https://github.com/makash)
-[![Twitter](https://img.shields.io/badge/Twitter-@makash-1DA1F2?style=flat-square&logo=twitter&logoColor=white)](https://x.com/makash)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-akashm-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/akashm/)
-[![YouTube](https://img.shields.io/badge/YouTube-@makash-FF0000?style=flat-square&logo=youtube)](https://www.youtube.com/@makash)
-
-If you deploy this for your team, I would love to hear about it -- [tweet at me](https://x.com/makash)!
+3. Commit your changes
+4. Push and open a Pull Request
 
 ---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE) for details.
+
+This project is a derivative work of [ccrank](https://github.com/makash/ccrank) by [Akash Mahajan](https://github.com/makash), also licensed under MIT.
 
 ---
 
 <div align="center">
-  <sub>Built with Claude Code. Deployed from a phone. Powered by <a href="https://github.com/ryoppippi/ccusage">ccusage</a> by <a href="https://github.com/ryoppippi">ryoppippi</a>.</sub>
+  <sub>
+    Built on <a href="https://github.com/makash/ccrank">ccrank</a> by <a href="https://github.com/makash">@makash</a> &middot;
+    Powered by <a href="https://github.com/ryoppippi/ccusage">ccusage</a> by <a href="https://github.com/ryoppippi">ryoppippi</a>
+  </sub>
 </div>
