@@ -298,27 +298,12 @@ export function landingPage(topEntries: LeaderboardEntry[]): string {
           ${_siteName}
         </h1>
         <p class="text-xl text-gray-400 max-w-lg mx-auto leading-relaxed">
-          Track Claude usage. Benchmark your leverage.
+          Track Claude Code & Codex CLI usage. Benchmark your leverage.
         </p>
-        <p class="text-xs text-gray-500 mt-2">by <a href="https://x.com/makash?utm_source=ccrank&utm_medium=web&utm_campaign=hero" target="_blank" rel="noopener" class="text-gray-400 hover:text-gray-300 transition">@makash</a></p>
+        <p class="text-xs text-gray-500 mt-2">Built on <a href="https://github.com/makash/ccrank" target="_blank" rel="noopener" class="text-gray-400 hover:text-gray-300 transition">ccrank</a> by <a href="https://github.com/makash" target="_blank" rel="noopener" class="text-gray-400 hover:text-gray-300 transition">@makash</a></p>
       </div>
 
       ${podiumSection}
-
-      <!-- Origin story snippet -->
-      <div class="mb-12 max-w-lg mx-auto">
-        <div class="bg-green-900/20 border border-green-800/30 rounded-xl p-5 text-left relative">
-          <div class="text-xs text-green-400/70 mb-2 font-medium">WhatsApp Group</div>
-          <p class="text-sm text-gray-300 leading-relaxed">
-            <span class="font-semibold text-green-400">Rajan:</span>
-            &ldquo;Code a Leaderboard Vivek? Let everyone submit their ccusage :)&rdquo;
-          </p>
-          <p class="text-xs text-gray-500 mt-2">
-            Built with Claude Code on a phone. Deployed in minutes.
-            <a href="/about" class="text-purple-400 hover:text-purple-300 transition ml-1">Read the full story &rarr;</a>
-          </p>
-        </div>
-      </div>
 
       <div class="flex flex-col sm:flex-row items-center gap-4">
         <a href="/login" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg px-8 py-3.5 transition text-sm shadow-lg shadow-purple-600/20">
