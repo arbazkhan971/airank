@@ -1,0 +1,18 @@
+# Copy this file to .dev.vars for local development
+# These secrets must also be set in production via: npx wrangler secret put <NAME>
+
+# Google OAuth 2.0 (required)
+# Create at: https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Session signing key (required)
+# Generate with: openssl rand -hex 32
+SESSION_SECRET=your-session-secret-at-least-32-chars
+
+# Admin email (optional) - first sign-in with this email gets admin role
+# Set in wrangler.toml [vars] section instead
+# ADMIN_EMAIL=you@gmail.com
+
+# Sirv image hosting (optional) - for social card PNG generation
+# SIRV_CLIENT_ID=your-sirv-client-id
+# SIRV_CLIENT_SECRET=your-sirv-client-secret
