@@ -28,6 +28,7 @@ import {
   settingsPage,
   profilePage,
   errorPage,
+  setBaseUrl,
 } from './html';
 import { isValidView, isValidDateString, getDateRange, sanitizeSource, slugify, isValidSlug, type ViewType } from './utils';
 import { generateCardSvg, type CardData } from './card';
@@ -85,6 +86,9 @@ app.use('*', async (c, next) => {
     c.set('session', null);
     c.set('user', null);
   }
+  // Set base URL for HTML templates (supports self-hosted deployments)
+  setBaseUrl(getBaseUrl(c));
+
   await next();
 });
 
@@ -752,7 +756,7 @@ app.get('/settings', async (c) => {
   const authErr = requireAuth(c);
   if (authErr) return authErr;
   const user = c.get('user')!;
-  const shareUrl = user.sharing_enabled && user.share_slug ? `https://ccrank.dev/card/${user.share_slug}` : null;
+  const shareUrl = user.sharing_enabled && user.share_slug ? `${getBaseUrl(c)}/card/${user.share_slug}` : null;
   const [tokens, gitProjects] = await Promise.all([
     c.env.DB.prepare(
       'SELECT id, token_prefix, created_at, last_used_at FROM api_tokens WHERE user_id = ? AND revoked_at IS NULL ORDER BY created_at DESC'
@@ -810,7 +814,7 @@ app.post('/api/settings/sharing', async (c) => {
 
   return c.json({
     ok: true,
-    shareUrl: enabled && slug ? `https://ccrank.dev/card/${slug}` : null,
+    shareUrl: enabled && slug ? `${getBaseUrl(c)}/card/${slug}` : null,
   });
 });
 

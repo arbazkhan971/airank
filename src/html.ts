@@ -19,6 +19,23 @@ import {
 } from './utils';
 import { IMG_RAJAN_MESSAGE, IMG_CLAUDE_BUILDING, IMG_APP_SHARED, IMG_DOMAIN_PURCHASE } from './images';
 
+// ─── Configurable base URL for self-hosted deployments ──────────────────────
+let _baseUrl = 'https://ccrank.dev';
+let _siteName = 'ccrank.dev';
+
+export function setBaseUrl(url: string): void {
+  _baseUrl = url.replace(/\/+$/, '');
+  try {
+    _siteName = new URL(_baseUrl).hostname;
+  } catch {
+    _siteName = _baseUrl;
+  }
+}
+
+export function getConfiguredBaseUrl(): string {
+  return _baseUrl;
+}
+
 function layout(title: string, content: string, user: User | null = null, ogOverrides?: { image?: string; description?: string }): string {
   const nav = user
     ? `<nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
@@ -125,9 +142,9 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta name="twitter:title" content="${escapeHtml(title)} | ccrank.dev">
   <meta name="twitter:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'Install the ccrank CLI to track your Claude Code usage and see where you rank.'}">
   <meta name="twitter:image" content="${ogOverrides?.image || 'https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp'}">
-  <meta property="og:site_name" content="ccrank.dev">
-  <meta property="og:url" content="https://ccrank.dev/">
-  <link rel="canonical" href="https://ccrank.dev/">
+  <meta property="og:site_name" content="${_siteName}">
+  <meta property="og:url" content="${_baseUrl}/">
+  <link rel="canonical" href="${_baseUrl}/">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f3c6;</text></svg>">
   <script type="application/ld+json">
   {
@@ -135,7 +152,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
     "@type": "WebApplication",
     "name": "Claude Leaderboard",
     "description": "Install the ccrank CLI to track your Claude Code usage and see where you rank.",
-    "url": "https://ccrank.dev/",
+    "url": "${_baseUrl}/",
     "applicationCategory": "DeveloperApplication",
     "creator": {
       "@type": "Person",
@@ -1138,8 +1155,8 @@ export function cardPage(
   const title = getTitle(stats.total_cost);
   const rankLabel = `#${stats.rank}`;
   const rankColor = stats.rank === 1 ? '#eab308' : stats.rank === 2 ? '#9ca3af' : stats.rank === 3 ? '#b45309' : '#7c3aed';
-  const cardUrl = `https://ccrank.dev/card/${escapeHtml(cardUser.share_slug)}`;
-  const imageUrl = `https://ccrank.dev/card/${escapeHtml(cardUser.share_slug)}/image.png`;
+  const cardUrl = `${_baseUrl}/card/${escapeHtml(cardUser.share_slug)}`;
+  const imageUrl = `${_baseUrl}/card/${escapeHtml(cardUser.share_slug)}/image.png`;
   const tweetText = encodeURIComponent(`I'm ranked ${rankLabel} on the Claude Code Leaderboard with ${formatCost(stats.total_cost)} spent! Check your ranking at ccrank.dev`);
 
   return `<!DOCTYPE html>
@@ -1147,8 +1164,8 @@ export function cardPage(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(cardUser.display_name)}'s Claude Stats - ccrank.dev</title>
-  <meta property="og:title" content="${escapeHtml(cardUser.display_name)} - ${rankLabel} on the Claude Code Leaderboard | ccrank.dev">
+  <title>${escapeHtml(cardUser.display_name)}'s Stats - ${_siteName}</title>
+  <meta property="og:title" content="${escapeHtml(cardUser.display_name)} - ${rankLabel} on the Leaderboard | ${_siteName}">
   <meta property="og:description" content="${title.label} with ${formatCost(stats.total_cost)} spent on Claude Code. ${stats.days_active} days active. ccrank.dev is the leaderboard for Claude Code power users.">
   <meta property="og:image" content="${imageUrl}">
   <meta property="og:image:width" content="1200">
@@ -1156,7 +1173,7 @@ export function cardPage(
   <meta property="og:url" content="${cardUrl}">
   <meta property="og:type" content="profile">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${escapeHtml(cardUser.display_name)} - ${rankLabel} on the Claude Code Leaderboard | ccrank.dev">
+  <meta name="twitter:title" content="${escapeHtml(cardUser.display_name)} - ${rankLabel} on the Leaderboard | ${_siteName}">
   <meta name="twitter:description" content="${title.label} with ${formatCost(stats.total_cost)} spent. ${stats.days_active} days active. ccrank.dev is the leaderboard for Claude Code power users.">
   <meta name="twitter:image" content="${imageUrl}">
   <meta name="twitter:creator" content="@makash">
@@ -1219,7 +1236,7 @@ export function cardPage(
 
     <!-- Footer -->
     <div class="px-8 py-4 bg-gray-800/50 border-t border-gray-800 flex items-center justify-between">
-      <span class="text-sm text-gray-400">ccrank.dev</span>
+      <span class="text-sm text-gray-400">${_siteName}</span>
       <span class="text-xs text-gray-600">Claude Code Leaderboard</span>
     </div>
   </div>
@@ -1255,7 +1272,7 @@ export function cardPage(
   <!-- CTA for viewers -->
   <div class="mt-8 text-center">
     <p class="text-sm text-gray-500 mb-2">Track your own Claude Code usage</p>
-    <a href="/" class="text-purple-400 hover:text-purple-300 font-medium transition">Join at ccrank.dev</a>
+    <a href="/" class="text-purple-400 hover:text-purple-300 font-medium transition">Join at ${_siteName}</a>
   </div>
 
   <script>
@@ -1358,7 +1375,7 @@ export function settingsPage(
           <div id="slug-section" class="${user.sharing_enabled ? '' : 'hidden'}">
             <label class="block text-sm text-gray-400 mb-2">Your card URL slug</label>
             <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-500">ccrank.dev/card/</span>
+              <span class="text-sm text-gray-500">${_siteName}/card/</span>
               <input type="text" id="share-slug" value="${escapeHtml(user.share_slug || '')}"
                 placeholder="your-name"
                 class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition"
@@ -1775,12 +1792,12 @@ export function profilePage(
   // Share on X button
   let shareHtml = '';
   if (stats.total_tokens > 0) {
-    let tweetText = `I'm ranked #${stats.rank} on ccrank.dev!`;
+    let tweetText = `I'm ranked #${stats.rank} on ${_siteName}!`;
     if (favTools.length > 0) {
       tweetText += '\n\nMy go-to Claude Code tools:';
       favTools.forEach(t => { tweetText += `\n- ${t}`; });
     }
-    tweetText += `\n\nCheck your ranking: ccrank.dev/card/${profileUser.share_slug}`;
+    tweetText += `\n\nCheck your ranking: ${_siteName}/card/${profileUser.share_slug}`;
     const encodedTweet = encodeURIComponent(tweetText);
     shareHtml = `<div class="mb-8">
       <a href="https://x.com/intent/tweet?text=${encodedTweet}"
@@ -1987,7 +2004,7 @@ export function profilePage(
 
   const ogDesc = `${title.label} ranked #${stats.rank} on ccrank.dev. ${stats.days_active} days active, ${formatTokens(stats.total_tokens)} tokens. ccrank.dev is the leaderboard for Claude Code power users.`;
 
-  const ogImage = `https://ccrank.dev/card/${profileUser.share_slug}/image.png`;
+  const ogImage = `${_baseUrl}/card/${profileUser.share_slug}/image.png`;
   return layout('Profile - ' + profileUser.display_name, content, viewer, { image: ogImage, description: ogDesc });
 }
 
