@@ -1185,7 +1185,7 @@ export function cardPage(
     <!-- Footer -->
     <div class="px-8 py-4 bg-gray-800/50 border-t border-gray-800 flex items-center justify-between">
       <span class="text-sm text-gray-400">${_siteName}</span>
-      <span class="text-xs text-gray-600">Claude Code Leaderboard</span>
+      <span class="text-xs text-gray-600">AIRank Leaderboard</span>
     </div>
   </div>
 
