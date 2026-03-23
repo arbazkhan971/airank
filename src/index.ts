@@ -1235,9 +1235,25 @@ app.post('/api/git/feedback', async (c) => {
   }
 
   const viewer = c.get('user');
+  const viewerId = viewer?.id || null;
+
+  // Prevent duplicate feedback from same viewer on same user
+  if (viewerId) {
+    const existing = await c.env.DB.prepare(
+      'SELECT id FROM git_feedback WHERE user_id = ? AND viewer_id = ?'
+    ).bind(body.userId, viewerId).first();
+    if (existing) {
+      // Update existing feedback instead of creating duplicate
+      await c.env.DB.prepare(
+        'UPDATE git_feedback SET rating = ? WHERE user_id = ? AND viewer_id = ?'
+      ).bind(body.rating, body.userId, viewerId).run();
+      return c.json({ ok: true });
+    }
+  }
+
   await c.env.DB.prepare(
     'INSERT INTO git_feedback (id, user_id, viewer_id, rating) VALUES (?, ?, ?, ?)'
-  ).bind(generateId(), body.userId, viewer?.id || null, body.rating).run();
+  ).bind(generateId(), body.userId, viewerId, body.rating).run();
 
   return c.json({ ok: true });
 });
