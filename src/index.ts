@@ -1227,8 +1227,14 @@ app.post('/api/git/feedback', async (c) => {
     return c.json({ ok: false, error: 'Invalid request' }, 400);
   }
 
-  if (!body.userId || (body.rating !== 1 && body.rating !== -1)) {
+  if (!body.userId || typeof body.userId !== 'string' || (body.rating !== 1 && body.rating !== -1)) {
     return c.json({ ok: false, error: 'Invalid feedback' }, 400);
+  }
+
+  // Verify the target user exists
+  const targetUser = await c.env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(body.userId).first();
+  if (!targetUser) {
+    return c.json({ ok: false, error: 'User not found' }, 404);
   }
 
   const viewer = c.get('user');
