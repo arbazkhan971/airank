@@ -134,14 +134,14 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta property="og:title" content="${escapeHtml(title)} | ${_siteName}">
   <meta property="og:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.'}">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="${ogOverrides?.image || 'https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp'}">
+  <meta property="og:image" content="${ogOverrides?.image || '${_baseUrl}/api/og-image'}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@makash">
   <meta name="twitter:title" content="${escapeHtml(title)} | ${_siteName}">
   <meta name="twitter:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.'}">
-  <meta name="twitter:image" content="${ogOverrides?.image || 'https://imgs.kloudle.com/kloudle-customer-logos/ccrank-dev/ccrank-open-graph-image.webp'}">
+  <meta name="twitter:image" content="${ogOverrides?.image || '${_baseUrl}/api/og-image'}">
   <meta property="og:site_name" content="${_siteName}">
   <meta property="og:url" content="${_baseUrl}/">
   <link rel="canonical" href="${_baseUrl}/">
