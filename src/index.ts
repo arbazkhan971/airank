@@ -936,7 +936,7 @@ app.get('/auth/google/callback', async (c) => {
   }
 
   // Check if user already exists
-  let user = await c.env.DB.prepare('SELECT * FROM users WHERE google_id = ?')
+  let user = await c.env.DB.prepare('SELECT id, email, display_name, avatar_url, is_admin FROM users WHERE google_id = ?')
     .bind(googleUser.id)
     .first();
 
