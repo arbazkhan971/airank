@@ -662,7 +662,7 @@ export function uploadPage(user: User, message: { type: 'success' | 'error'; tex
     'Install',
     `<div class="max-w-3xl mx-auto">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold mb-2">Install the ccrank CLI</h1>
+        <h1 class="text-3xl font-bold mb-2">Install the AIRank CLI</h1>
         <p class="text-gray-400">Your first upload should take about two minutes.</p>
       </div>
 
