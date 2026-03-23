@@ -129,7 +129,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)} | ${_siteName}</title>
-  <meta name="author" content="Akash Mahajan">
+  <meta name="author" content="AIRank">
   <meta name="description" content="AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.">
   <meta property="og:title" content="${escapeHtml(title)} | ${_siteName}">
   <meta property="og:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.'}">
