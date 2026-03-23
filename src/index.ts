@@ -116,7 +116,7 @@ async function getTokenUser(c: any): Promise<Variables['user'] | null> {
 
   const tokenHash = await hashApiToken(token);
   const tokenRow = await c.env.DB.prepare(
-    'SELECT id, user_id FROM api_tokens WHERE token_hash = ? AND revoked_at IS NULL'
+    'SELECT id, user_id FROM api_tokens WHERE token_hash = ? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > datetime(\'now\'))'
   ).bind(tokenHash).first();
 
   if (!tokenRow) return null;
