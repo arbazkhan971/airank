@@ -1,0 +1,24 @@
+# AIRank - Cloudflare Workers Configuration
+# Copy this to wrangler.toml and fill in your values
+
+name = "airank"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "airank-db"
+database_id = "YOUR_D1_DATABASE_ID"  # Run: npx wrangler d1 create airank-db
+
+[vars]
+GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+ADMIN_EMAIL = "your-admin@example.com"
+
+# Set secrets via CLI (never commit these):
+# npx wrangler secret put GOOGLE_CLIENT_SECRET
+# npx wrangler secret put SESSION_SECRET
+#
+# Optional - for social card PNG hosting:
+# npx wrangler secret put SIRV_CLIENT_ID
+# npx wrangler secret put SIRV_CLIENT_SECRET
