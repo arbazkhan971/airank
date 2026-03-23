@@ -581,7 +581,7 @@ app.get('/user/:slug', async (c) => {
     c.executionCtx.waitUntil(
       generateCardSvg(cardData, 'full')
         .then(svg => uploadCardSvg(effectiveSlug, svg, c.env.SIRV_CLIENT_ID, c.env.SIRV_CLIENT_SECRET))
-        .catch(() => {})
+        .catch((e) => console.error('Sirv upload failed:', e?.message || e))
     );
   }
 
@@ -647,7 +647,7 @@ app.get('/card/:slug/image.svg', async (c) => {
   // Fire-and-forget upload to Sirv for PNG OG images (full mode only)
   if (mode === 'full' && c.env.SIRV_CLIENT_ID) {
     c.executionCtx.waitUntil(
-      uploadCardSvg(slug, svg, c.env.SIRV_CLIENT_ID, c.env.SIRV_CLIENT_SECRET).catch(() => {})
+      uploadCardSvg(slug, svg, c.env.SIRV_CLIENT_ID, c.env.SIRV_CLIENT_SECRET).catch((e) => console.error('Sirv upload failed:', e?.message || e))
     );
   }
 
