@@ -1,5 +1,5 @@
 /**
- * HTML templates for the Claude Leaderboard application.
+ * HTML templates for the AIRank platform.
  * Dark themed, responsive design using Tailwind CSS via CDN.
  */
 
@@ -20,8 +20,8 @@ import {
 import { IMG_RAJAN_MESSAGE, IMG_CLAUDE_BUILDING, IMG_APP_SHARED, IMG_DOMAIN_PURCHASE } from './images';
 
 // ─── Configurable base URL for self-hosted deployments ──────────────────────
-let _baseUrl = 'https://ccrank.dev';
-let _siteName = 'ccrank.dev';
+let _baseUrl = 'https://airank.dev';
+let _siteName = 'AIRank';
 
 export function setBaseUrl(url: string): void {
   _baseUrl = url.replace(/\/+$/, '');
