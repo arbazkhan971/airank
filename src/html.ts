@@ -540,11 +540,11 @@ export function leaderboardPage(
   }
 
   const sortDescriptions: Record<string, string> = {
-    cost: 'Who\'s pushing Claude Code the hardest? Ranked by total spend.',
+    cost: 'Who\'s pushing AI coding tools the hardest? Ranked by total spend.',
     tokens: 'Who\'s consuming the most tokens? Ranked by total token usage.',
     output_per_dollar: 'Who gets the most code written per dollar? Masters of prompting and task scoping.',
     cache_rate: 'Who reuses context best? High cache rates mean deep, focused work on consistent projects.',
-    output_ratio: 'Who gets the most output per input? Efficient prompters who let Claude do the heavy lifting.',
+    output_ratio: 'Who gets the most output per input? Efficient prompters who maximize output.',
   };
 
   return layout(
