@@ -138,7 +138,7 @@ function layout(title: string, content: string, user: User | null = null, ogOver
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:creator" content="@makash">
+  <meta name="twitter:creator" content="@arbaaborz">
   <meta name="twitter:title" content="${escapeHtml(title)} | ${_siteName}">
   <meta name="twitter:description" content="${ogOverrides?.description ? escapeHtml(ogOverrides.description) : 'AI usage analytics platform. Track Claude Code & Codex CLI usage, compare metrics, and compete on the leaderboard.'}">
   <meta name="twitter:image" content="${ogOverrides?.image || '${_baseUrl}/api/og-image'}">
@@ -1170,7 +1170,7 @@ export function cardPage(
   <meta name="twitter:title" content="${escapeHtml(cardUser.display_name)} - ${rankLabel} on the Leaderboard | ${_siteName}">
   <meta name="twitter:description" content="${title.label} with ${formatCost(stats.total_cost)} spent. ${stats.days_active} days active. ${_siteName} is the leaderboard for AI coding power users.">
   <meta name="twitter:image" content="${imageUrl}">
-  <meta name="twitter:creator" content="@makash">
+  <meta name="twitter:creator" content="@arbaaborz">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f3c6;</text></svg>">
   <style>
