@@ -1029,6 +1029,11 @@ app.post('/api/upload', async (c) => {
     return c.json({ ok: false, error: 'Missing "json" field' }, 400);
   }
 
+  // Limit upload size to 10MB to prevent abuse
+  if (body.json.length > 10_000_000) {
+    return c.json({ ok: false, error: 'Upload too large (max 10MB)' }, 413);
+  }
+
   const source = sanitizeSource(body.source);
 
   let report;
