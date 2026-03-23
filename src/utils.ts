@@ -1,5 +1,5 @@
 /**
- * Shared utility functions and types for the Claude Leaderboard application.
+ * Shared utility functions and types for the AIRank platform.
  */
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
