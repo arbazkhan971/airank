@@ -431,20 +431,17 @@ app.get('/admin', async (c) => {
 
 app.get('/user/:slug', async (c) => {
   const slug = c.req.param('slug');
-  // First try to find by share_slug (for users who have set a custom slug)
+  // First try to find by share_slug
   let profileUser = await c.env.DB.prepare(
-    'SELECT id, display_name, avatar_url, share_slug, sharing_enabled, fav_tools FROM users WHERE share_slug = ?'
+    'SELECT id, display_name, avatar_url, share_slug, sharing_enabled, fav_tools, git_sharing_enabled FROM users WHERE share_slug = ?'
   ).bind(slug).first();
 
-  // If not found by share_slug, try to find by auto-generated slug from display_name
+  // If not found, try auto-generated slug from display_name (computed in SQL, O(1) index scan)
   if (!profileUser) {
-    const allUsers = await c.env.DB.prepare(
-      'SELECT id, display_name, avatar_url, share_slug, sharing_enabled, fav_tools FROM users'
-    ).all();
-    profileUser = (allUsers.results || []).find((u: any) => {
-      const autoSlug = u.display_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      return autoSlug === slug;
-    }) || null;
+    profileUser = await c.env.DB.prepare(
+      `SELECT id, display_name, avatar_url, share_slug, sharing_enabled, fav_tools, git_sharing_enabled FROM users
+       WHERE LOWER(REPLACE(REPLACE(REPLACE(display_name, ' ', '-'), '.', ''), '''', '')) = ?`
+    ).bind(slug).first();
   }
 
   if (!profileUser) return c.html(errorPage('Not Found', 'This profile does not exist.'), 404);
